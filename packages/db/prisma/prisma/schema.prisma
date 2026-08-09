@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id       String @id @default(uuid())
+  username String
+  email    String @unique
+  password String
+
+  memberships Membership[]
+  comments    Comment[]
+  issues      IssueMapping[]
+}
+
+model Organization {
+  id          String @id @default(uuid())
+  name        String
+  description String
+
+  memberships Membership[]
+  boards      Board[]
+}
+
+model Membership {
+  id     String @id @default(uuid())
+  role   Role   @default(MEMBER)
+  userId String
+  orgId  String
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, orgId])
+}
+
+model Board {
+  id             String @id @default(uuid())
+  title          String
+  organizationId String
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  sections Section[]
+  issues   Issue[]
+}
+
+model Section {
+  id      String @id @default(uuid())
+  title   String
+  boardId String
+
+  board  Board   @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  issues Issue[]
+}
+
+model Issue {
+  id          String  @id @default(uuid())
+  title       String
+  description String?
+
+  boardId   String
+  sectionId String
+
+  board   Board   @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  assignees IssueMapping[]
+  comments  Comment[]
+}
+
+model IssueMapping {
+  id      String @id @default(uuid())
+  userId  String
+  issueId String
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, issueId])
+}
+
+model Comment {
+  id      String @id @default(uuid())
+  content String
+
+  userId  String
+  issueId String
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+}
