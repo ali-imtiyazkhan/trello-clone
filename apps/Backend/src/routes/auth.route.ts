@@ -1,21 +1,18 @@
-import express from "express";
-import dotenv from "dotenv";
+import { Router } from "express";
+import type { Request, Response, NextFunction, RequestHandler } from "express";
 import { prisma } from "prisma";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-dotenv.config();
-
-const app = express();
-app.use(express.json());
+const router = Router();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET environment variable is required");
 }
 
-function asyncHandler(fn: express.RequestHandler) {
-  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+function asyncHandler(fn: RequestHandler) {
+  return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 }
@@ -28,7 +25,7 @@ function validatePassword(password: string): boolean {
   return password.length >= 8;
 }
 
-app.post("/signup", asyncHandler(async (req, res) => {
+router.post("/signup", asyncHandler(async (req, res) => {
   const { username, password, email } = req.body;
 
   if (!username || !password || !email) {
@@ -59,7 +56,7 @@ app.post("/signup", asyncHandler(async (req, res) => {
   res.status(201).json({ message: "User created successfully", user: newUser, token });
 }));
 
-app.post("/signin", asyncHandler(async (req, res) => {
+router.post("/signin", asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -85,11 +82,4 @@ app.post("/signin", asyncHandler(async (req, res) => {
   });
 }));
 
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err);
-  res.status(500).json({ message: "Internal server error" });
-});
-
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
-});
+export default router;
