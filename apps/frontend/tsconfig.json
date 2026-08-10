@@ -7,8 +7,6 @@
       }
     ],
     "strictNullChecks": true,
-    "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
     "paths": {
       "@repo/*": [
         "../../packages/*"
