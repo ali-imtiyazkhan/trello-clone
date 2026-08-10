@@ -25,7 +25,8 @@
   "workspaces": [
     "apps/*",
     "packages/*",
-    "packages/db/*"
+    "packages/db/*",
+    "packages/shared/*"
   ],
   "dependencies": {
     "websocket": "^1.0.35"
