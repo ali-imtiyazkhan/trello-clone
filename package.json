@@ -26,5 +26,8 @@
     "apps/*",
     "packages/*",
     "packages/db/*"
-  ]
+  ],
+  "dependencies": {
+    "websocket": "^1.0.35"
+  }
 }

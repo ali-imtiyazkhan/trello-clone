@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.route";
+import orgRoutes from "./routes/org.route"
 
 dotenv.config();
 
@@ -8,6 +9,12 @@ const app = express();
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/orgs", orgRoutes);
+app.use("/api/boards", boardRoutes);
+app.use("/api/sections", sectionRoutes);
+app.use("/api/issues", issueRoutes);
+app.use("/api/comments", commentRoutes);
 
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err);
