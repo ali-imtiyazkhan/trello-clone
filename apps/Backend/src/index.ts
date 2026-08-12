@@ -5,11 +5,14 @@ import orgRoutes from "./routes/org.route";
 import userRoutes from "./routes/users.route";
 import boardRoutes from "./routes/board.route"
 import sectionRoutes from "./routes/section.route"
+import cors from "cors"
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
+
+app.use(cors())
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
@@ -24,6 +27,6 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   res.status(500).json({ message: "Internal server error" });
 });
 
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+app.listen(3001, () => {
+  console.log("Server running on port 3001");
 });
