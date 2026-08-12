@@ -1,10 +1,11 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { prisma } from "prisma"
+import { authMiddleware } from "../middleware/auth";
 
 const route = Router()
 
-route.post("/", async (req: Request, res: Response) => {
+route.post("/", authMiddleware, async (req: Request, res: Response) => {
     const { name, description } = req.body;
 
     if (!name || !description) {
@@ -15,7 +16,7 @@ route.post("/", async (req: Request, res: Response) => {
         data: {
             name,
             description,
-            memberships: { create: { userId: req.body.userId, role: "OWNER", } }
+            memberships: { create: { userId: req.user.id, role: "OWNER", } }
         }
     })
 
