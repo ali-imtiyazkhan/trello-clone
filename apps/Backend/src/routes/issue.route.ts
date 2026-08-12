@@ -1154,7 +1154,7 @@ router.delete(
     "/:sectionId/:issueId/comments/:commentId",
     authMiddleware,
     async (req, res) => {
-        const { sectionId, issueId, commentId } = req.params;
+        const { sectionId, issueId, commentId } = req.params as { sectionId: string; issueId: string; commentId: string };
 
         if (!sectionId || !issueId || !commentId) {
             return res.status(400).json({
