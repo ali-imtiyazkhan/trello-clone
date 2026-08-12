@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/auth.route";
 import orgRoutes from "./routes/org.route";
 import userRoutes from "./routes/users.route";
+import boardRoutes from "./routes/board.route"
+import sectionRoutes from "./routes/section.route"
 
 dotenv.config();
 
@@ -12,8 +14,8 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/orgs", orgRoutes);
-// app.use("/api/boards", boardRoutes);
-// app.use("/api/sections", sectionRoutes);
+app.use("/api/boards", boardRoutes);
+app.use("/api/sections", sectionRoutes);
 // app.use("/api/issues", issueRoutes);
 // app.use("/api/comments", commentRoutes);
 
