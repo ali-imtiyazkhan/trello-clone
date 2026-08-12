@@ -1013,7 +1013,7 @@ router.get(
                 where: {
                     issueId: issueId as string,
                 },
-                include: {
+include: {
                     user: {
                         select: {
                             id: true,
@@ -1022,9 +1022,9 @@ router.get(
                         },
                     },
                 },
-                // orderBy: {
-                //     createdAt: "asc",
-                // },
+                orderBy: {
+                    id: "asc",
+                },
             });
 
             return res.status(200).json({
