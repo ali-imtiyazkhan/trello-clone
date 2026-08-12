@@ -761,7 +761,7 @@ router.delete(
     "/:sectionId/:issueId/assignees/:userId",
     authMiddleware,
     async (req, res) => {
-        const { sectionId, issueId, userId } = req.params;
+        const { sectionId, issueId, userId } = req.params as { sectionId: string; issueId: string; userId: string };
 
         if (!sectionId || !issueId || !userId) {
             return res.status(400).json({
@@ -1045,7 +1045,7 @@ router.put(
     "/:sectionId/:issueId/comments/:commentId",
     authMiddleware,
     async (req, res) => {
-        const { sectionId, issueId, commentId } = req.params;
+        const { sectionId, issueId, commentId } = req.params as { sectionId: string; issueId: string; commentId: string };
         const { content } = req.body;
 
         if (!sectionId || !issueId || !commentId || !content) {
