@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import type { ServerMessage, NewMessageMessage } from "@repo/shared";
 
