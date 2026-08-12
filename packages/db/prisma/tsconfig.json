@@ -16,7 +16,6 @@
     "noEmit": true,
 
     // Path resolution
-    "baseUrl": ".",
     "paths": {
       "../generated/prisma": ["./generated/prisma/client.ts"]
     },
