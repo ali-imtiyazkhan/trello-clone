@@ -1,23 +1,37 @@
 "use client";
 
-import axios from "axios";
 import React, { useState } from "react";
+import axios from "axios";
 import { useRouter } from "next/navigation";
 
-export default function SignInPage() {
+export default function SignUpPage() {
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:3000/api/auth/signin", {
+      const res = await axios.post("http://localhost:3000/api/auth/signup", {
+        username,
         email,
         password,
       });
@@ -26,19 +40,19 @@ export default function SignInPage() {
       localStorage.setItem("token", token);
       router.push("/boards");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Sign in failed");
+      setError(err.response?.data?.message || "Sign up failed");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="bg-surface rounded-lg shadow-sm border border-border p-8">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-semibold text-text-primary">Welcome back</h1>
-            <p className="text-text-secondary mt-1">Sign in to your account</p>
+            <h1 className="text-2xl font-semibold text-text-primary">Create account</h1>
+            <p className="text-text-secondary mt-1">Get started with Trello Clone</p>
           </div>
 
           {error && (
@@ -47,7 +61,25 @@ export default function SignInPage() {
             </div>
           )}
 
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-text-secondary mb-1">
+                Username
+              </label>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="johndoe"
+                required
+                minLength={3}
+                maxLength={30}
+                className="w-full px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                disabled={loading}
+              />
+            </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-1">
                 Email
@@ -75,6 +107,23 @@ export default function SignInPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
+                minLength={8}
+                className="w-full px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-text-secondary mb-1">
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                required
                 className="w-full px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
                 disabled={loading}
               />
@@ -85,14 +134,14 @@ export default function SignInPage() {
               disabled={loading}
               className="w-full bg-primary text-white py-2.5 px-4 rounded-md font-medium hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Creating account..." : "Create account"}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-text-secondary">
-            Don't have an account?{" "}
-            <a href="/signup" className="text-primary hover:underline font-medium">
-              Sign up
+            Already have an account?{" "}
+            <a href="/signin" className="text-primary hover:underline font-medium">
+              Sign in
             </a>
           </p>
         </div>
