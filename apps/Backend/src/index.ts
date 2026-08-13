@@ -3,9 +3,11 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/auth.route";
 import orgRoutes from "./routes/org.route";
 import userRoutes from "./routes/users.route";
-import boardRoutes from "./routes/board.route"
-import sectionRoutes from "./routes/section.route"
-import cors from "cors"
+import boardRoutes from "./routes/board.route";
+import sectionRoutes from "./routes/section.route";
+import issueRoutes from "./routes/issue.route";
+import commentRoutes from "./routes/comment.route";
+import cors from "cors";
 
 dotenv.config();
 
@@ -19,8 +21,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/orgs", orgRoutes);
 app.use("/api/boards", boardRoutes);
 app.use("/api/sections", sectionRoutes);
-// app.use("/api/issues", issueRoutes);
-// app.use("/api/comments", commentRoutes);
+app.use("/api/issues", issueRoutes);
+app.use("/api/comments", commentRoutes);
 
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err);
