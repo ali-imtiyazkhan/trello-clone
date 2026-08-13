@@ -105,6 +105,40 @@ router.get("/board/:boardId", authMiddleware, async (req, res) => {
                 id: true,
                 title: true,
                 boardId: true,
+                board: {
+                    select: {
+                        id: true,
+                        title: true,
+                        organizationId: true,
+                    },
+                },
+                issues: {
+                    select: {
+                        id: true,
+                        title: true,
+                        description: true,
+                        sectionId: true,
+                        _count: {
+                            select: {
+                                comments: true
+                            }
+                        },
+                        assignees: {
+                            include: {
+                                user: {
+                                    select: {
+                                        id: true,
+                                        username: true,
+                                        email: true
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    orderBy: {
+                        id: "asc"
+                    }
+                },
                 _count: {
                     select: {
                         issues: true

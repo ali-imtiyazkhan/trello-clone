@@ -35,8 +35,12 @@ export default function OrganizationPage() {
 
       console.log("res is: ", res);
       router.push("/boards");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to create organization");
+    } catch (err) {
+      setError(
+        axios.isAxiosError(err)
+          ? err.response?.data?.message || "Failed to create organization"
+          : "Failed to create organization"
+      );
     } finally {
       setLoading(false);
     }

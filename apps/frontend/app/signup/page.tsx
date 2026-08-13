@@ -39,8 +39,8 @@ export default function SignUpPage() {
       const token = res.data.token;
       localStorage.setItem("token", token);
       router.push("/boards");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Sign up failed");
+    } catch (err) {
+      setError(axios.isAxiosError(err) ? err.response?.data?.message || "Sign up failed" : "Sign up failed");
     } finally {
       setLoading(false);
     }

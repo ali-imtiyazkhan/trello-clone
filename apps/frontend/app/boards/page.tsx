@@ -39,8 +39,12 @@ export default function BoardPage() {
       setSuccess("Board created successfully");
       setTitle("");
       setOrganizationId("");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to create board");
+    } catch (err) {
+      setError(
+        axios.isAxiosError(err)
+          ? err.response?.data?.message || "Failed to create board"
+          : "Failed to create board"
+      );
     } finally {
       setLoading(false);
     }

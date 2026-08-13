@@ -25,8 +25,8 @@ export default function SignInPage() {
       const token = res.data.token;
       localStorage.setItem("token", token);
       router.push("/boards");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Sign in failed");
+    } catch (err) {
+      setError(axios.isAxiosError(err) ? err.response?.data?.message || "Sign in failed" : "Sign in failed");
     } finally {
       setLoading(false);
     }
@@ -90,7 +90,7 @@ export default function SignInPage() {
           </form>
 
           <p className="mt-6 text-center text-sm text-text-secondary">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <a href="/signup" className="text-primary hover:underline font-medium">
               Sign up
             </a>
