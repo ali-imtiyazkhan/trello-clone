@@ -24,7 +24,7 @@ export default function OrganizationPage() {
         return;
       }
 
-      const res = await axios.post("http://localhost:3000/api/orgs", {
+      const res = await axios.post("http://localhost:3001/api/orgs", {
         name,
         description,
       }, {

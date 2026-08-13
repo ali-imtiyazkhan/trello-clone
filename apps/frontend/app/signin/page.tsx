@@ -17,7 +17,7 @@ export default function SignInPage() {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:3000/api/auth/signin", {
+      const res = await axios.post("http://localhost:3001/api/auth/signin", {
         email,
         password,
       });
