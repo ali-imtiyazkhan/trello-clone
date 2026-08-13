@@ -8,14 +8,17 @@ datasource db {
 }
 
 model User {
-  id       String @id @default(uuid())
-  username String
-  email    String @unique
-  password String
+  id             String    @id @default(uuid())
+  username       String
+  email          String    @unique
+  password       String
+  githubUsername String?
+  githubSyncedAt DateTime?
 
   memberships Membership[]
   comments    Comment[]
   issues      IssueMapping[]
+  skills      UserSkill[]
 }
 
 model Organization {
@@ -60,9 +63,10 @@ model Section {
 }
 
 model Issue {
-  id          String  @id @default(uuid())
-  title       String
-  description String?
+  id             String   @id @default(uuid())
+  title          String
+  description    String?
+  requiredSkills String[]
 
   boardId   String
   sectionId String
@@ -100,4 +104,29 @@ enum Role {
   OWNER
   ADMIN
   MEMBER
+}
+
+model UserSkill {
+  id              String      @id @default(uuid())
+  userId          String
+  name            String
+  source          SkillSource @default(MANUAL)
+  strength        Float       @default(0)
+  occurrenceCount Int         @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+}
+
+model GithubCache {
+  username  String   @id
+  payload   Json
+  fetchedAt DateTime @default(now())
+}
+
+enum SkillSource {
+  RESUME
+  GITHUB
+  MANUAL
 }
