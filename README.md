@@ -1,159 +1,97 @@
-# Turborepo starter
+# Trello Clone
 
-This Turborepo starter is maintained by the Turborepo core team.
+A real-time kanban board app with organizations, boards, sections, cards (issues), assignees, comments, and live presence over WebSocket.
 
-## Using this example
+## Architecture
 
-Run the following command:
+Turborepo monorepo:
 
-```sh
-npx create-turbo@latest
-```
+| Path | App | Stack |
+|---|---|---|
+| `apps/frontend` | Next.js web app (port 3000) | React 19, Tailwind CSS 4, Axios |
+| `apps/Backend` | REST API (port 3001) | Express, TypeScript, JWT auth |
+| `apps/websocket` | WebSocket server (port 8080) | `ws` — rooms, presence, board events |
+| `packages/db` | Prisma schema + generated client | PostgreSQL |
 
-## What's inside?
+## Prerequisites
 
-This Turborepo includes the following packages/apps:
+- [Bun](https://bun.sh) (package manager)
+- PostgreSQL database
 
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+## Setup
 
 ```sh
-cd my-turborepo
-turbo build
+bun install
 ```
 
-Without global `turbo`, use your package manager:
+### Database
+
+Create a `.env` in `packages/db/prisma` (or set in your shell):
+
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/trello"
+```
+
+Then run migrations and generate the client:
 
 ```sh
-cd my-turborepo
-npx turbo build
-bun dlx turbo build
-bun exec turbo build
+cd packages/db/prisma
+bunx prisma migrate deploy
+bunx prisma generate
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+### Backend
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+Create `apps/Backend/.env`:
+
+```env
+JWT_SECRET="some-long-random-secret"
+```
+
+### Run all apps
 
 ```sh
-turbo build --filter=docs
+bun run dev
 ```
 
-Without global `turbo`:
+or individually:
 
 ```sh
-npx turbo build --filter=docs
-bun exec turbo build --filter=docs
-bun exec turbo build --filter=docs
+bun --cwd apps/Backend run dev      # API on http://localhost:3001
+bun --cwd apps/websocket run dev    # WebSocket on ws://localhost:8080
+bun --cwd apps/frontend run dev     # UI on http://localhost:3000
 ```
 
-### Develop
+## Features
 
-To develop all apps and packages, run the following command:
+- Sign up / sign in with JWT
+- Organizations: create, delete, invite members, assign roles (OWNER / ADMIN / MEMBER)
+- Boards: create, rename, delete
+- Sections (columns): create, rename, delete
+- Cards (issues): create, delete, drag-and-drop between sections, edit title/description, assign members, comments
+- Real-time: live presence ("N online"), instant board updates, and board chat via WebSocket
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+## Checks
 
 ```sh
-cd my-turborepo
-turbo dev
+bun --cwd apps/frontend run check-types   # typecheck
+bun --cwd apps/frontend run lint          # lint (zero warnings allowed)
 ```
 
-Without global `turbo`, use your package manager:
+## API overview
 
-```sh
-cd my-turborepo
-npx turbo dev
-bun exec turbo dev
-bun exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-bun exec turbo dev --filter=web
-bun exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-bun exec turbo login
-bun exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-bun exec turbo link
-bun exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+| Method | Endpoint | Purpose |
+|---|---|---|
+| POST | `/api/auth/signup`, `/api/auth/signin` | Auth |
+| GET/POST | `/api/users/me` | Current user |
+| GET/POST | `/api/orgs` | List / create organizations |
+| GET/PUT/DELETE | `/api/orgs/:id` | Org detail / update / delete (owner) |
+| GET/POST/DELETE/PUT | `/api/orgs/:id/members[/:userId]` | Member management |
+| GET/POST | `/api/boards` | List (by `orgId`) / create |
+| PUT/DELETE | `/api/boards/:id` | Rename / delete |
+| GET/POST | `/api/sections` | Sections by board / create |
+| PUT/DELETE | `/api/sections/:id` | Rename / delete |
+| POST | `/api/issues` | Create card |
+| GET/PUT/DELETE | `/api/issues/:sectionId/:issueId` | Card detail / update (incl. move) / delete |
+| POST/DELETE | `/api/issues/:sectionId/:issueId/assignees[/:userId]` | Assign / unassign |
+| GET/POST | `/api/issues/:sectionId/:issueId/comments` | Comments |

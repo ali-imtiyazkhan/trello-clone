@@ -3,6 +3,8 @@
 import axios from "axios";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import Header from "../components/Header";
+import RequireAuth from "../components/RequireAuth";
 
 const API = "http://localhost:3001/api";
 
@@ -137,20 +139,11 @@ export default function BoardPage() {
   const activeOrg = orgs.find((org) => org.id === activeOrgId);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-surface border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-text-primary">Boards</h1>
-          <Link
-            href="/organization"
-            className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-          >
-            Organizations
-          </Link>
-        </div>
-      </header>
+    <RequireAuth>
+      <div className="min-h-screen bg-background">
+        <Header active="boards" />
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
+        <main className="max-w-6xl mx-auto px-4 py-8">
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
             {error}
@@ -241,5 +234,6 @@ export default function BoardPage() {
         )}
       </main>
     </div>
+    </RequireAuth>
   );
 }

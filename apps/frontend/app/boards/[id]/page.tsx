@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
+import Header from "../../components/Header";
+import RequireAuth from "../../components/RequireAuth";
 
 const API = "http://localhost:3001/api";
 const WS_URL = "ws://localhost:8080";
@@ -61,6 +63,14 @@ export default function BoardDetailPage() {
   const [connected, setConnected] = useState(false);
   const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
   const [meId, setMeId] = useState("");
+  const [meUsername, setMeUsername] = useState("");
+
+  // board chat
+  const [chatOpen, setChatOpen] = useState(false);
+  const [messages, setMessages] = useState<
+    { userId?: string; username?: string; message: string; timestamp?: string }[]
+  >([]);
+  const [chatText, setChatText] = useState("");
 
   // board management
   const [editingBoardTitle, setEditingBoardTitle] = useState(false);
@@ -199,7 +209,10 @@ export default function BoardDetailPage() {
         });
         userId = me.data.user.id;
         username = me.data.user.username;
-        if (!disposed) setMeId(userId);
+        if (!disposed) {
+          setMeId(userId);
+          setMeUsername(username);
+        }
       } catch {
         return;
       }
@@ -241,6 +254,10 @@ export default function BoardDetailPage() {
             setActiveUsers((prev) =>
               prev.filter((u) => u.userId !== message.data.userId)
             );
+            break;
+
+          case "NEW_MESSAGE":
+            setMessages((prev) => [...prev, message.data]);
             break;
 
           case "SECTION_CREATED":
@@ -353,6 +370,18 @@ export default function BoardDetailPage() {
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(payload));
     }
+  }
+
+  function sendChat(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const message = chatText.trim();
+    if (!message) return;
+
+    send({
+      type: "SEND_MESSAGE",
+      data: { boardId: id, userId: meId, username: meUsername, message },
+    });
+    setChatText("");
   }
 
   const selectedIssueRef = useRef<Issue | null>(null);
@@ -789,10 +818,22 @@ export default function BoardDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-surface border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
+    <RequireAuth>
+      <div className="min-h-screen bg-background">
+        <Header
+          active="boards"
+          right={
+            <Link
+              href="/boards"
+              className="text-sm text-text-secondary hover:text-text-primary transition-colors"
+            >
+              &larr; Boards
+            </Link>
+          }
+        />
+
+        <div className="border-b border-border bg-surface">
+          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-2">
             {editingBoardTitle ? (
               <div className="flex items-center gap-2">
                 <input
@@ -836,7 +877,7 @@ export default function BoardDetailPage() {
                 </button>
               </div>
             )}
-            <p className="text-xs text-text-secondary mt-0.5">
+            <p className="text-xs text-text-secondary">
               {connected ? (
                 activeUsers.length > 0 ? (
                   <>
@@ -853,16 +894,9 @@ export default function BoardDetailPage() {
               )}
             </p>
           </div>
-          <Link
-            href="/boards"
-            className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-          >
-            &larr; Back to boards
-          </Link>
         </div>
-      </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
+        <main className="max-w-6xl mx-auto px-4 py-8">
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
             {error}
@@ -1254,6 +1288,77 @@ export default function BoardDetailPage() {
           </div>
         </div>
       )}
+
+      <button
+        type="button"
+        onClick={() => setChatOpen((v) => !v)}
+        className={`fixed bottom-4 right-4 z-40 px-4 py-2 rounded-full text-sm font-medium shadow-lg transition-colors ${
+          chatOpen
+            ? "bg-text-secondary text-background hover:opacity-80"
+            : "bg-primary text-white hover:bg-primary-hover"
+        }`}
+      >
+        {chatOpen ? "Close chat" : "Board chat"}
+      </button>
+
+      {chatOpen && (
+        <div className="fixed bottom-16 right-4 z-40 w-80 h-96 bg-surface border border-border rounded-lg shadow-xl flex flex-col">
+          <div className="px-4 py-3 border-b border-border font-medium text-sm text-text-primary">
+            Board chat
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-3 space-y-2">
+            {messages.map((m, i) => (
+              <div
+                key={i}
+                className={
+                  m.userId === meId ? "text-right" : "text-left"
+                }
+              >
+                <span className="text-[11px] text-text-secondary">
+                  {m.userId === meId ? "You" : m.username || "Someone"}
+                  {m.timestamp &&
+                    ` · ${new Date(m.timestamp).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}`}
+                </span>
+                <p
+                  className={`inline-block mt-0.5 max-w-[85%] px-3 py-1.5 rounded-lg text-sm break-words ${
+                    m.userId === meId
+                      ? "bg-primary text-white"
+                      : "bg-background border border-border text-text-primary"
+                  }`}
+                >
+                  {m.message}
+                </p>
+              </div>
+            ))}
+            {messages.length === 0 && (
+              <p className="text-xs text-text-secondary">
+                No messages yet. Say hello!
+              </p>
+            )}
+          </div>
+
+          <form onSubmit={sendChat} className="p-3 border-t border-border flex gap-2">
+            <input
+              type="text"
+              value={chatText}
+              onChange={(e) => setChatText(e.target.value)}
+              placeholder="Message the board"
+              className="flex-1 px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+            <button
+              type="submit"
+              className="bg-primary text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors"
+            >
+              Send
+            </button>
+          </form>
+        </div>
+      )}
     </div>
+    </RequireAuth>
   );
 }
