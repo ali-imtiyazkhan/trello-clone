@@ -106,7 +106,6 @@ router.get("/", authMiddleware, async (req, res) => {
                 }
             }
         },
-        // orderBy: { createdAt: 'asc' }
     })
 
     res.json({

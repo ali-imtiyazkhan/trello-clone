@@ -8,7 +8,6 @@ interface UserSession {
     username?: string
 }
 
-// boardId -> socket -> session
 const rooms = new Map<string, Map<WebSocket, UserSession>>();
 
 function sendToSocket(socket: WebSocket, payload: object) {
