@@ -21,6 +21,7 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "ui-aurora-sign-up"
   ]
 }

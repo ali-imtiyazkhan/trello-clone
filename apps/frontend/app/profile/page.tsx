@@ -27,9 +27,9 @@ function getErrorMessage(err: unknown, fallback: string) {
 }
 
 const SOURCE_BADGE: Record<userSkill["source"], string> = {
-  RESUME: "bg-blue-100 text-blue-700",
-  GITHUB: "bg-purple-100 text-purple-700",
-  MANUAL: "bg-green-100 text-green-700",
+  RESUME: "bg-blue-400/10 text-blue-400",
+  GITHUB: "bg-purple-400/10 text-purple-400",
+  MANUAL: "bg-green-400/10 text-green-400",
 };
 
 export default function ProfilePage() {
@@ -148,39 +148,39 @@ export default function ProfilePage() {
 
   return (
     <RequireAuth>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-black text-white font-[family-name:var(--font-inter)]">
         <Header active="profile" />
         <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+            <div className="p-3 bg-red-400/10 border border-red-400/20 text-red-400 rounded-xl text-sm">
               {error}
             </div>
           )}
           {notice && (
-            <div className="p-3 bg-green-50 border border-green-200 text-green-700 rounded-md text-sm">
+            <div className="p-3 bg-green-400/10 border border-green-400/20 text-green-400 rounded-xl text-sm">
               {notice}
             </div>
           )}
 
-          <section className="bg-surface border border-border rounded-lg p-5 space-y-3">
-            <h2 className="font-semibold text-text-primary">Link GitHub</h2>
+          <section className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5 space-y-3">
+            <h2 className="font-semibold text-white">Link GitHub</h2>
             <form onSubmit={handleGithubSync} className="flex gap-2">
               <input
                 type="text"
                 value={githubInput}
                 onChange={(e) => setGithubInput(e.target.value)}
                 placeholder="GitHub username"
-                className="flex-1 max-w-xs px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="flex-1 max-w-xs bg-black border border-white/10 rounded-xl h-11 px-4 text-sm text-white placeholder:text-white/20 outline-none focus:ring-2 focus:ring-white/20 transition-shadow duration-200"
               />
               <button
                 type="submit"
                 disabled={syncingGithub}
-                className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors disabled:opacity-50"
+                className="bg-white text-black px-4 py-2 rounded-xl text-sm font-semibold hover:bg-white/90 transition-colors disabled:opacity-50"
               >
                 {syncingGithub ? "Syncing..." : "Sync"}
               </button>
             </form>
-            <p className="text-xs text-text-secondary">
+            <p className="text-xs text-white/40">
               {githubUsername
                 ? `Linked to @${githubUsername}${
                     githubSyncedAt
@@ -191,8 +191,8 @@ export default function ProfilePage() {
             </p>
           </section>
 
-          <section className="bg-surface border border-border rounded-lg p-5 space-y-3">
-            <h2 className="font-semibold text-text-primary">Upload resume</h2>
+          <section className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5 space-y-3">
+            <h2 className="font-semibold text-white">Upload resume</h2>
             <input
               ref={fileRef}
               type="file"
@@ -202,21 +202,21 @@ export default function ProfilePage() {
                 const file = e.target.files?.[0];
                 if (file) handleUpload(file);
               }}
-              className="block w-full text-sm text-text-secondary file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border-0 file:bg-primary file:text-white file:text-sm file:font-medium file:hover:bg-primary-hover file:transition-colors disabled:opacity-50"
+              className="block w-full text-sm text-white/40 file:mr-3 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-white file:text-black file:text-sm file:font-semibold file:hover:bg-white/90 file:transition-colors disabled:opacity-50"
             />
             {uploading && (
-              <p className="text-xs text-text-secondary">Parsing resume...</p>
+              <p className="text-xs text-white/40">Parsing resume...</p>
             )}
             {parsed && (
               <div>
-                <p className="text-xs font-medium text-text-secondary mb-1">
+                <p className="text-xs font-medium text-white/40 mb-1">
                   Found in resume:
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {parsed.map((h) => (
                     <span
                       key={h.name}
-                      className="text-xs bg-background border border-border rounded-full px-2.5 py-1 text-text-primary"
+                      className="text-xs bg-black border border-white/10 rounded-full px-2.5 py-1 text-white"
                     >
                       {h.name} ×{h.count}
                     </span>
@@ -226,12 +226,12 @@ export default function ProfilePage() {
             )}
           </section>
 
-          <section className="bg-surface border border-border rounded-lg p-5 space-y-3">
-            <h2 className="font-semibold text-text-primary">
+          <section className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5 space-y-3">
+            <h2 className="font-semibold text-white">
               My skills ({skills.length})
             </h2>
             {skills.length === 0 && (
-              <p className="text-sm text-text-secondary">
+              <p className="text-sm text-white/40">
                 No skills yet. Upload a resume, link GitHub, or add skills
                 manually below.
               </p>
@@ -239,16 +239,16 @@ export default function ProfilePage() {
             <ul className="space-y-3">
               {skills.map((skill) => (
                 <li key={skill.id} className="flex items-center gap-3">
-                  <span className="w-40 text-sm text-text-primary truncate">
+                  <span className="w-40 text-sm text-white truncate">
                     {skill.name}
                   </span>
-                  <div className="flex-1 h-2 bg-background border border-border rounded-full overflow-hidden">
+                  <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-primary rounded-full"
+                      className="h-full bg-white rounded-full"
                       style={{ width: `${Math.round(skill.strength * 100)}%` }}
                     />
                   </div>
-                  <span className="text-xs text-text-secondary w-10 text-right">
+                  <span className="text-xs text-white/40 w-10 text-right">
                     {Math.round(skill.strength * 100)}%
                   </span>
                   <span
@@ -261,7 +261,7 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={() => handleDeleteSkill(skill)}
-                    className="text-xs text-text-secondary hover:text-red-600 transition-colors"
+                    className="text-xs text-white/40 hover:text-red-400 transition-colors"
                     title="Delete skill"
                   >
                     &times;
@@ -271,16 +271,14 @@ export default function ProfilePage() {
             </ul>
           </section>
 
-          <section className="bg-surface border border-border rounded-lg p-5 space-y-3">
-            <h2 className="font-semibold text-text-primary">
-              Add skills manually
-            </h2>
+          <section className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5 space-y-3">
+            <h2 className="font-semibold text-white">Add skills manually</h2>
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search skills..."
-              className="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full bg-black border border-white/10 rounded-xl h-11 px-4 text-sm text-white placeholder:text-white/20 outline-none focus:ring-2 focus:ring-white/20 transition-shadow duration-200"
             />
             <form onSubmit={handleSaveManual} className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto">
@@ -289,10 +287,10 @@ export default function ProfilePage() {
                   return (
                     <label
                       key={name}
-                      className={`flex items-center justify-between gap-2 px-3 py-2 rounded-md border text-sm cursor-pointer transition-colors ${
+                      className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-sm cursor-pointer transition-colors ${
                         value > 0
-                          ? "border-primary bg-primary/5 text-text-primary"
-                          : "border-border bg-background text-text-secondary hover:border-primary/50"
+                          ? "border-white bg-white/10 text-white"
+                          : "border-white/10 bg-black text-white/40 hover:border-white/30"
                       }`}
                     >
                       <span className="truncate">{name}</span>
@@ -305,7 +303,7 @@ export default function ProfilePage() {
                           }))
                         }
                         onClick={(e) => e.stopPropagation()}
-                        className="text-xs bg-background border border-border rounded px-1 py-0.5"
+                        className="text-xs bg-[#1a1a1a] border border-white/10 rounded px-1 py-0.5 text-white"
                       >
                         <option value={0}>–</option>
                         {[1, 2, 3, 4, 5].map((n) => (
@@ -321,7 +319,7 @@ export default function ProfilePage() {
               <button
                 type="submit"
                 disabled={savingManual}
-                className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors disabled:opacity-50"
+                className="bg-white text-black px-4 py-2 rounded-xl text-sm font-semibold hover:bg-white/90 transition-colors disabled:opacity-50"
               >
                 {savingManual ? "Saving..." : "Save manual skills"}
               </button>
