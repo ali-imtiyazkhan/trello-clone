@@ -165,6 +165,41 @@ wss.on("connection", (socket) => {
                     break
                 }
 
+                case "ASSIGN_CARD": {
+                    const { boardId, cardId, userId, username, cardTitle, score } = data.data || {}
+                    if (!boardId || !cardId || !userId) return
+
+                    broadcastToRoom(boardId, {
+                        type: "CARD_ASSIGNED",
+                        data: {
+                            boardId,
+                            cardId,
+                            userId,
+                            username,
+                            cardTitle,
+                            score,
+                            timestamp: new Date().toISOString(),
+                        },
+                    })
+                    break
+                }
+
+                case "PROFILE_UPDATED": {
+                    const { boardId, userId, username } = data.data || {}
+                    if (!boardId || !userId) return
+
+                    broadcastToRoom(boardId, {
+                        type: "PROFILE_UPDATED",
+                        data: {
+                            boardId,
+                            userId,
+                            username,
+                            timestamp: new Date().toISOString(),
+                        },
+                    })
+                    break
+                }
+
                 case "SEND_MESSAGE": {
                     const { boardId, userId, username, message } = data.data || {}
                     if (!boardId || !message) return

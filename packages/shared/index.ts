@@ -130,6 +130,29 @@ export interface ErrorMessage {
   };
 }
 
+export interface CardAssignedMessage {
+  type: 'CARD_ASSIGNED';
+  data: {
+    boardId: string;
+    cardId: string;
+    userId: string;
+    username?: string;
+    cardTitle?: string;
+    score?: number;
+    timestamp: string;
+  };
+}
+
+export interface ProfileUpdatedMessage {
+  type: 'PROFILE_UPDATED';
+  data: {
+    boardId: string;
+    userId: string;
+    username?: string;
+    timestamp: string;
+  };
+}
+
 export type ServerMessage =
   | RoomJoinedMessage
   | UserJoinedMessage
@@ -142,6 +165,8 @@ export type ServerMessage =
   | SectionCreatedMessage
   | SectionUpdatedMessage
   | SectionDeletedMessage
+  | CardAssignedMessage
+  | ProfileUpdatedMessage
   | PongMessage
   | ErrorMessage;
 
@@ -156,4 +181,6 @@ export type ClientMessage =
   | { type: 'CREATE_SECTION'; data: { boardId: string; userId: string; section: any } }
   | { type: 'UPDATE_SECTION'; data: { boardId: string; userId: string; section: any; sectionId: string } }
   | { type: 'DELETE_SECTION'; data: { boardId: string; userId: string; sectionId: string } }
+  | { type: 'ASSIGN_CARD'; data: { boardId: string; cardId: string; userId: string; username?: string; cardTitle?: string; score?: number } }
+  | { type: 'PROFILE_UPDATED'; data: { boardId: string; userId: string; username?: string } }
   | { type: 'PING'; data: {} };

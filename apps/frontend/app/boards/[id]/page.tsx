@@ -110,6 +110,11 @@ export default function BoardDetailPage() {
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
 
+  // toast
+  const [toast, setToast] = useState("");
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const meIdRef = useRef("");
+
   const wsRef = useRef<WebSocket | null>(null);
   const dragRef = useRef<{ issueId: string; sourceSectionId: string } | null>(
     null
@@ -229,6 +234,7 @@ export default function BoardDetailPage() {
         if (!disposed) {
           setMeId(userId);
           setMeUsername(username);
+          meIdRef.current = userId;
         }
       } catch {
         return;
@@ -360,6 +366,24 @@ export default function BoardDetailPage() {
                   : section
               );
             });
+            break;
+
+          case "CARD_ASSIGNED":
+            if (message.data.userId !== meIdRef.current) {
+              showToast(
+                `${message.data.username ?? "Someone"} was assigned to "${
+                  message.data.cardTitle ?? "a card"
+                }" by skill match${message.data.score != null ? ` (score ${message.data.score})` : ""}`
+              );
+            }
+            break;
+
+          case "PROFILE_UPDATED":
+            if (message.data.userId !== meIdRef.current) {
+              showToast(
+                `${message.data.username ?? "Someone"} updated their skill profile`
+              );
+            }
             break;
         }
       };
@@ -765,6 +789,26 @@ export default function BoardDetailPage() {
     } catch (err) {
       setError(getErrorMessage(err, "Failed to update required skills"));
     }
+  }
+
+  function showToast(text: string) {
+    setToast(text);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToast(""), 4000);
+  }
+
+  function emitAssignment(candidate: Candidate) {
+    send({
+      type: "ASSIGN_CARD",
+      data: {
+        boardId: id,
+        cardId: selectedIssue?.id,
+        userId: candidate.userId,
+        username: candidate.username,
+        cardTitle: selectedIssue?.title,
+        score: candidate.score,
+      },
+    });
   }
 
   async function addComment(e: React.FormEvent<HTMLFormElement>) {
@@ -1372,15 +1416,16 @@ export default function BoardDetailPage() {
                         ) : (
                           <button
                             type="button"
-                            onClick={() =>
+                            onClick={() => {
                               toggleAssignee({
                                 user: {
                                   id: c.userId,
                                   username: c.username,
                                   email: "",
                                 },
-                              })
-                            }
+                              });
+                              emitAssignment(c);
+                            }}
                             className="text-xs bg-primary text-white px-3 py-1 rounded-md font-medium hover:bg-primary-hover transition-colors shrink-0"
                           >
                             Assign
@@ -1471,6 +1516,12 @@ export default function BoardDetailPage() {
       >
         {chatOpen ? "Close chat" : "Board chat"}
       </button>
+
+      {toast && (
+        <div className="fixed bottom-4 left-4 z-50 max-w-sm bg-surface border border-border rounded-lg shadow-lg px-4 py-3 text-sm text-text-primary">
+          {toast}
+        </div>
+      )}
 
       {chatOpen && (
         <div className="fixed bottom-16 right-4 z-40 w-80 h-96 bg-surface border border-border rounded-lg shadow-xl flex flex-col">
