@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "prisma";
 import { authMiddleware } from "../middleware/auth";
+import { matchText, getSkillDictionary, scoreCandidates } from "@repo/shared";
 
 const router = Router();
 
@@ -49,21 +50,25 @@ router.post("/", authMiddleware, async (req, res) => {
             });
         }
 
+        const requiredSkills = matchText(`${title} ${description ?? ""}`).slice(0, 5).map((h) => h.name)
+
         const issue = await prisma.issue.create({
             data: {
                 title,
                 description,
                 sectionId,
                 boardId: section.board.id,
-            },
-            select: {
+                requiredSkills,
+            }, select: {
                 id: true,
                 title: true,
                 description: true,
+                requiredSkills: true,
                 boardId: true,
-                sectionId: true,
-            },
-        });
+                sectionId
+            }
+        })
+
 
         return res.status(201).json({
             message: "Issue created successfully",
@@ -340,19 +345,26 @@ router.put(
                 targetSectionId = newSectionId;
             }
 
+            const data: { title: string; description: string | null; sectionId: string; requiredSkills?: string[] } = {
+                title: title ?? issue.title,
+                description: description ?? issue.description,
+                sectionId: targetSectionId as string
+            };
+
+            if (title !== undefined || description !== undefined) {
+                data.requiredSkills = matchText(`${data.title} ${data.description ?? ""}`).slice(0, 5).map((h) => h.name)
+            }
+
             const updatedIssue = await prisma.issue.update({
                 where: { id: issueId as string },
-                data: {
-                    title: title ?? issue.title,
-                    description: description ?? issue.description,
-                    sectionId: targetSectionId as string,
-                },
+                data,
                 select: {
                     id: true,
                     title: true,
                     description: true,
                     sectionId: true,
                     boardId: true,
+                    requiredSkills: true
                 },
             });
 
@@ -510,7 +522,7 @@ router.get(
                             },
                         },
                     },
-_count: {
+                    _count: {
                         select: {
                             comments: true,
                         },
@@ -1013,7 +1025,7 @@ router.get(
                 where: {
                     issueId: issueId as string,
                 },
-include: {
+                include: {
                     user: {
                         select: {
                             id: true,
@@ -1246,5 +1258,201 @@ router.delete(
         }
     }
 );
+
+router.put("/:sectionId/:issueId/skills", authMiddleware, async (req, res) => {
+    const { sectionId, issueId } = req.params as { sectionId: string, issueId: string };
+    const { skills } = req.body as { skills?: string[] };
+
+    if (!sectionId || !issueId) {
+        return res.status(400).json({
+            message: "please provide the correct input"
+        })
+    }
+
+    if (!Array.isArray(skills) || skills.some((s) => typeof s != "string")) {
+        return res.status(400).json({
+            message: "skills must be an array of string"
+        })
+    }
+
+    const normalized = [...new Set(skills.map((s) => s.trim().toLowerCase()).filter(Boolean))];
+
+    try {
+
+        const section = await prisma.section.findUnique({
+            where: {
+                id: sectionId
+            },
+            include: {
+                board: {
+                    select: {
+                        id: true,
+                        organizationId: true
+                    }
+                }
+            }
+        })
+
+        if (!section) {
+            return res.status(404).json({
+                message: "section doesn't exist"
+            })
+        }
+
+        const membership = await prisma.membership.findUnique({
+            where: {
+                userId_orgId: {
+                    userId: req.user.id,
+                    orgId: section.board.organizationId
+                }
+            }
+        })
+
+        if (!membership) {
+            return res.status(403).json({
+                message: "You are not a member of this organization"
+            })
+        }
+
+        const issue = await prisma.issue.findFirst({
+            where: {
+                id: issueId,
+                sectionId: sectionId as string
+            }
+        });
+
+        if (!issue) {
+            return res.status(404).json({
+                message: "Issue doesn't exist in this section"
+            })
+        }
+
+        const updatedIssue = await prisma.issue.update({
+            where: { id: issueId },
+            data: { requiredSkills: normalized }
+        })
+        return res.status(200).json({
+            message: "Required skills updated successfully",
+            issue: updatedIssue,
+        });
+
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            message: "Internal server error"
+        })
+    }
+})
+
+router.post("/:sectionId/:issueId/suggest", authMiddleware, async (req, res) => {
+    const { sectionId, issueId } = req.params as { sectionId: string; issueId: string };
+
+    if (!sectionId || !issueId) {
+        return res.status(400).json({
+            message: "Please provide the correct input",
+        });
+    }
+
+    try {
+        const section = await prisma.section.findUnique({
+            where: {
+                id: sectionId as string,
+            },
+            include: {
+                board: {
+                    select: {
+                        id: true,
+                        organizationId: true,
+                    },
+                },
+            },
+        });
+
+        if (!section) {
+            return res.status(404).json({
+                message: "Section doesn't exist",
+            });
+        }
+
+        const membership = await prisma.membership.findUnique({
+            where: {
+                userId_orgId: {
+                    orgId: section.board.organizationId,
+                    userId: req.user.id,
+                },
+            },
+        });
+
+        if (!membership) {
+            return res.status(403).json({
+                message: "You are not a member of this organization",
+            });
+        }
+
+        const issue = await prisma.issue.findFirst({
+            where: {
+                id: issueId as string,
+                sectionId: sectionId as string,
+            },
+        });
+
+        if (!issue) {
+            return res.status(404).json({
+                message: "Issue doesn't exist in this section",
+            });
+        }
+
+        const weightByName = new Map(getSkillDictionary().map((s) => [s.name, s.weight]));
+        const requiredSkills = issue.requiredSkills.map((name) => ({
+            name,
+            weight: weightByName.get(name) ?? 1,
+        }));
+
+        const members = await prisma.membership.findMany({
+            where: { orgId: section.board.organizationId },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        username: true,
+                        skills: true,
+                    },
+                },
+            },
+        });
+
+        const loadRows = await prisma.issueMapping.findMany({
+            where: { issue: { board: { organizationId: section.board.organizationId } } },
+            select: { userId: true },
+        });
+
+        const loadByUser = loadRows.reduce<Record<string, number>>((acc, m) => {
+            acc[m.userId] = (acc[m.userId] ?? 0) + 1;
+            return acc;
+        }, {});
+
+        const candidates = scoreCandidates({
+            requiredSkills,
+            members: members.map((m) => ({
+                userId: m.user.id,
+                username: m.user.username,
+                skills: Object.fromEntries(m.user.skills.map((s) => [s.name, s.strength])),
+            })),
+            loadOf: (userId) => loadByUser[userId] ?? 0,
+        });
+
+        return res.status(200).json({
+            message: "Suggestions retrieved successfully",
+            requiredSkills,
+            candidates,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            message: "Internal server error",
+        });
+    }
+});
 
 export default router;

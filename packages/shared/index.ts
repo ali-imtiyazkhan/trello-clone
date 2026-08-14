@@ -1,4 +1,5 @@
 export * from "./skills";
+export * from "./scorer"
 
 export interface RoomJoinedMessage {
   type: 'ROOM_JOINED';
