@@ -17,11 +17,10 @@ function NavLink({ href, active, children }: NavLinkProps) {
   return (
     <Link
       href={href}
-      className={`text-sm transition-colors ${
-        active
+      className={`text-sm transition-colors ${active
           ? "text-text-primary font-medium"
           : "text-text-secondary hover:text-text-primary"
-      }`}
+        }`}
     >
       {children}
     </Link>
@@ -32,7 +31,7 @@ export default function Header({
   active,
   right,
 }: {
-  active?: "boards" | "orgs";
+  active?: "boards" | "orgs" | "profile";
   right?: React.ReactNode;
 }) {
   const router = useRouter();
@@ -74,6 +73,9 @@ export default function Header({
             </NavLink>
             <NavLink href="/organization" active={active === "orgs"}>
               Organizations
+            </NavLink>
+            <NavLink href="/profile" active={active === "profile"}>
+              Profile
             </NavLink>
           </nav>
         </div>

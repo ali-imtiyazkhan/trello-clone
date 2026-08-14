@@ -118,6 +118,7 @@ router.get("/board/:boardId", authMiddleware, async (req, res) => {
                         title: true,
                         description: true,
                         sectionId: true,
+                        requiredSkills: true,
                         _count: {
                             select: {
                                 comments: true

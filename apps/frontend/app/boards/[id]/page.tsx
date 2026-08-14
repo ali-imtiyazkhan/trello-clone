@@ -18,6 +18,7 @@ type Issue = {
   title: string;
   description: string | null;
   sectionId: string;
+  requiredSkills: string[];
   assignees: Assignee[];
   _count?: { comments: number };
 };
@@ -39,6 +40,16 @@ type Comment = {
 };
 
 type ActiveUser = { userId: string; username?: string };
+
+type Candidate = {
+  userId: string;
+  username: string;
+  score: number;
+  precision: number;
+  load: number;
+  matchedSkills: { skill: string; strength: number }[];
+  missingSkills: string[];
+};
 
 function getErrorMessage(err: unknown, fallback: string) {
   if (axios.isAxiosError(err)) {
@@ -94,6 +105,11 @@ export default function BoardDetailPage() {
   const [commentText, setCommentText] = useState("");
   const [savingComment, setSavingComment] = useState(false);
 
+  // suggest assignee
+  const [suggestions, setSuggestions] = useState<Candidate[]>([]);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
+
   const wsRef = useRef<WebSocket | null>(null);
   const dragRef = useRef<{ issueId: string; sourceSectionId: string } | null>(
     null
@@ -118,6 +134,7 @@ export default function BoardDetailPage() {
       title: issue.title,
       description: issue.description,
       sectionId: issue.sectionId,
+      requiredSkills: issue.requiredSkills,
       assignees: issue.assignees,
       _count: issue._count ?? { comments: 0 },
     };
@@ -599,6 +616,8 @@ export default function BoardDetailPage() {
     setIssueDescription(issue.description ?? "");
     setShowMembers(false);
     setComments([]);
+    setSuggestions([]);
+    setSuggestOpen(false);
 
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -700,6 +719,51 @@ export default function BoardDetailPage() {
       }
     } catch (err) {
       setError(getErrorMessage(err, "Failed to update assignees"));
+    }
+  }
+
+  async function suggestAssignees() {
+    const issue = selectedIssue;
+    if (!issue || suggesting) return;
+    setSuggesting(true);
+    setError("");
+    setSuggestOpen(true);
+
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await axios.post(
+        `${API}/issues/${issue.sectionId}/${issue.id}/suggest`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setSuggestions(res.data.candidates ?? []);
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to get suggestions"));
+    } finally {
+      setSuggesting(false);
+    }
+  }
+
+  async function removeRequiredSkill(skill: string) {
+    const issue = selectedIssue;
+    if (!issue) return;
+    setError("");
+
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await axios.put(
+        `${API}/issues/${issue.sectionId}/${issue.id}/skills`,
+        { skills: (issue.requiredSkills ?? []).filter((s) => s !== skill) },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const updated = { ...issue, requiredSkills: res.data.issue.requiredSkills };
+      upsertCard(updated);
+      emitCardEvent("UPDATE_CARD", cardPayload(updated));
+      setSelectedIssue(updated);
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to update required skills"));
     }
   }
 
@@ -1098,6 +1162,7 @@ export default function BoardDetailPage() {
           onClick={() => {
             setSelectedIssue(null);
             setShowMembers(false);
+            setSuggestOpen(false);
           }}
         >
           <div
@@ -1113,6 +1178,7 @@ export default function BoardDetailPage() {
                 onClick={() => {
                   setSelectedIssue(null);
                   setShowMembers(false);
+                  setSuggestOpen(false);
                 }}
                 className="text-text-secondary hover:text-text-primary text-lg leading-none"
                 title="Close"
@@ -1223,6 +1289,111 @@ export default function BoardDetailPage() {
                       </p>
                     )}
                   </div>
+                )}
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-xs font-medium text-text-secondary mb-1">
+                  Required skills
+                </label>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {(selectedIssue.requiredSkills ?? []).map((skill) => (
+                    <span
+                      key={skill}
+                      className="inline-flex items-center gap-1 bg-background border border-border text-xs text-text-primary rounded-full px-2.5 py-1"
+                    >
+                      {skill}
+                      <button
+                        type="button"
+                        onClick={() => removeRequiredSkill(skill)}
+                        className="text-text-secondary hover:text-red-600"
+                        title="Remove skill"
+                      >
+                        &times;
+                      </button>
+                    </span>
+                  ))}
+                  {(selectedIssue.requiredSkills ?? []).length === 0 && (
+                    <span className="text-xs text-text-secondary">
+                      No required skills — set them in the card title/description
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={suggestAssignees}
+                  disabled={suggesting}
+                  className="mt-3 w-full bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors disabled:opacity-50"
+                >
+                  {suggesting ? "Scoring members..." : "Suggest assignee"}
+                </button>
+
+                {suggestOpen && suggestions.length > 0 && (
+                  <div className="mt-3 border border-border rounded-md bg-background divide-y divide-border">
+                    {suggestions.map((c, i) => (
+                      <div key={c.userId} className="p-3 flex items-center gap-3">
+                        <span className="w-6 text-center text-xs font-medium text-text-secondary">
+                          {i + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm text-text-primary truncate">
+                              {c.username}
+                            </span>
+                            <span className="text-xs text-text-secondary">
+                              score {c.score} · precision{" "}
+                              {Math.round(c.precision * 100)}% · load {c.load}
+                            </span>
+                          </div>
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {c.matchedSkills.map((m) => (
+                              <span
+                                key={m.skill}
+                                className="text-[11px] bg-green-50 text-green-700 rounded-full px-2 py-0.5"
+                              >
+                                {m.skill} {Math.round(m.strength * 100)}%
+                              </span>
+                            ))}
+                            {c.missingSkills.map((m) => (
+                              <span
+                                key={m}
+                                className="text-[11px] bg-red-50 text-red-600 rounded-full px-2 py-0.5"
+                              >
+                                missing: {m}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        {isAssigned(c.userId) ? (
+                          <span className="text-xs text-primary shrink-0">
+                            ✓ Assigned
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              toggleAssignee({
+                                user: {
+                                  id: c.userId,
+                                  username: c.username,
+                                  email: "",
+                                },
+                              })
+                            }
+                            className="text-xs bg-primary text-white px-3 py-1 rounded-md font-medium hover:bg-primary-hover transition-colors shrink-0"
+                          >
+                            Assign
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {suggestOpen && suggestions.length === 0 && (
+                  <p className="mt-3 text-xs text-text-secondary">
+                    No candidates found.
+                  </p>
                 )}
               </div>
 

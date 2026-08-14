@@ -196,4 +196,29 @@ router.post("/github", authMiddleware, async (req, res) => {
     }
 });
 
+router.delete("/skills/:skillId", authMiddleware, async (req, res) => {
+    const { skillId } = req.params;
+
+    try {
+        const skill = await prisma.userSkill.findUnique({
+            where: { id: skillId as string },
+        });
+
+        if (!skill) {
+            return res.status(404).json({ message: "Skill not found" });
+        }
+
+        if (skill.userId !== req.user.id) {
+            return res.status(403).json({ message: "You can only delete your own skills" });
+        }
+
+        await prisma.userSkill.delete({ where: { id: skillId as string } });
+
+        return res.json({ message: "Skill deleted successfully" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
 export default router;
