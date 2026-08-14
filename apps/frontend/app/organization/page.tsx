@@ -19,7 +19,17 @@ type Org = {
 type Member = {
   id: string;
   role: string;
-  user: { id: string; username: string; email: string };
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    skills?: {
+      id: string;
+      name: string;
+      strength: number;
+      source: string;
+    }[];
+  };
 };
 
 type OrgDetail = {
@@ -421,6 +431,23 @@ export default function OrganizationPage() {
                           <p className="text-xs text-text-secondary truncate">
                             {member.user.email}
                           </p>
+                          {(member.user.skills?.length ?? 0) > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {member.user.skills!.slice(0, 3).map((skill) => (
+                                <span
+                                  key={skill.id}
+                                  className="text-[11px] bg-primary/10 text-text-primary rounded-full px-2 py-0.5"
+                                >
+                                  {skill.name}
+                                </span>
+                              ))}
+                              {(member.user.skills?.length ?? 0) > 3 && (
+                                <span className="text-[11px] text-text-secondary">
+                                  +{member.user.skills!.length - 3} more
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           {detail.role === "OWNER" &&

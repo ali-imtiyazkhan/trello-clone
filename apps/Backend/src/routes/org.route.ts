@@ -60,7 +60,20 @@ route.get("/:id", authMiddleware, async (req: Request, res: Response) => {
         include: {
           boards: { select: { id: true, title: true } },
           memberships: {
-            include: { user: { select: { id: true, username: true, email: true } } },
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  email: true,
+                  skills: {
+                    select: { id: true, name: true, strength: true, source: true },
+                    orderBy: { strength: "desc" },
+                    take: 5,
+                  },
+                },
+              },
+            },
           },
         },
       },
