@@ -43,7 +43,7 @@ router.post("/:issueId", authMiddleware, async (req, res) => {
         const membership = await prisma.membership.findUnique({
             where: {
                 userId_orgId: {
-                    userId: req.user.id,
+                    userId: req.userId,
                     orgId: issue.section.board.organizationId,
                 },
             },
@@ -59,7 +59,7 @@ router.post("/:issueId", authMiddleware, async (req, res) => {
             data: {
                 content,
                 issueId: issueId as string,
-                userId: req.user.id,
+                userId: req.userId,
             },
             select: {
                 id: true,
@@ -121,7 +121,7 @@ router.get("/:issueId", authMiddleware, async (req, res) => {
         const membership = await prisma.membership.findUnique({
             where: {
                 userId_orgId: {
-                    userId: req.user.id,
+                    userId: req.userId,
                     orgId: issue.section.board.organizationId,
                 },
             },
@@ -199,7 +199,7 @@ router.get("/:commentId", authMiddleware, async (req, res) => {
         const membership = await prisma.membership.findUnique({
             where: {
                 userId_orgId: {
-                    userId: req.user.id,
+                    userId: req.userId,
                     orgId: comment.issue.section.board.organizationId,
                 },
             },
@@ -272,7 +272,7 @@ router.put("/:commentId", authMiddleware, async (req, res) => {
         const membership = await prisma.membership.findUnique({
             where: {
                 userId_orgId: {
-                    userId: req.user.id,
+                    userId: req.userId,
                     orgId: comment.issue.section.board.organizationId,
                 },
             },
@@ -284,7 +284,7 @@ router.put("/:commentId", authMiddleware, async (req, res) => {
             });
         }
 
-        if (comment.userId !== req.user.id) {
+        if (comment.userId !== req.userId) {
             return res.status(403).json({
                 message: "You can only update your own comment",
             });
@@ -358,7 +358,7 @@ router.delete("/:commentId", authMiddleware, async (req, res) => {
       const membership = await prisma.membership.findUnique({
         where: {
           userId_orgId: {
-            userId: req.user.id,
+            userId: req.userId,
             orgId: comment.issue.section.board.organizationId,
           },
         },
@@ -370,7 +370,7 @@ router.delete("/:commentId", authMiddleware, async (req, res) => {
         });
       }
   
-      if (comment.userId !== req.user.id) {
+      if (comment.userId !== req.userId) {
         return res.status(403).json({
           message: "You can only delete your own comment",
         });

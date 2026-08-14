@@ -29,7 +29,7 @@ router.post("/", authMiddleware, async (req, res) => {
         const membership = await prisma.membership.findUnique({
             where: {
                 userId_orgId: {
-                    userId: req.user.id,
+                    userId: req.userId,
                     orgId: board.organizationId
                 }
             }
@@ -85,7 +85,7 @@ router.get("/board/:boardId", authMiddleware, async (req, res) => {
         const membership = await prisma.membership.findUnique({
             where: {
                 userId_orgId: {
-                    userId: req.user.id,
+                    userId: req.userId,
                     orgId: board.organizationId
                 }
             }
@@ -186,7 +186,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
         const membership = await prisma.membership.findUnique({
             where: {
                 userId_orgId: {
-                    userId: req.user.id,
+                    userId: req.userId,
                     orgId: board.organizationId
                 }
             }
@@ -259,7 +259,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
         const membership = await prisma.membership.findUnique({
             where: {
                 userId_orgId: {
-                    userId: req.user.id,
+                    userId: req.userId,
                     orgId: board.organizationId
                 }
             }
@@ -333,7 +333,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
         const membership = await prisma.membership.findUnique({
             where: {
                 userId_orgId: {
-                    userId: req.user.id,
+                    userId: req.userId,
                     orgId: board.organizationId
                 }
             }

@@ -75,7 +75,7 @@ router.post("/resume", authMiddleware, upload.single("file"), async (req, res) =
 
         const hits = matchText(text);
         for (const hit of hits) {
-            await upsertSkill(req.user.id, hit.name, Math.min(1, hit.count / 5), hit.count, "RESUME");
+            await upsertSkill(req.userId, hit.name, Math.min(1, hit.count / 5), hit.count, "RESUME");
         }
 
         return res.status(201).json({ message: "Resume parsed successfully", skills: hits });
@@ -108,13 +108,13 @@ router.post("/skills", authMiddleware, async (req, res) => {
             const skill = await prisma.userSkill.upsert({
                 where: {
                     userId_name: {
-                        userId: req.user.id,
+                        userId: req.userId,
                         name: s.name.toLowerCase(),
                     },
                 },
                 update: { strength: s.strength / 5, source: "MANUAL", occurrenceCount: 1 },
                 create: {
-                    userId: req.user.id,
+                    userId: req.userId,
                     name: s.name.toLowerCase(),
                     strength: s.strength / 5,
                     source: "MANUAL",
@@ -136,7 +136,7 @@ router.post("/skills", authMiddleware, async (req, res) => {
 router.get("/", authMiddleware, async (req, res) => {
     try {
         const user = await prisma.user.findUnique({
-            where: { id: req.user.id },
+            where: { id: req.userId },
             select: {
                 id: true,
                 username: true,
@@ -171,20 +171,20 @@ router.post("/github", authMiddleware, async (req, res) => {
 
         const languageSkills = languageStatsToSkills(data.languages);
         for (const skill of languageSkills) {
-            await upsertSkill(req.user.id, skill.name, skill.strength, skill.count, "GITHUB");
+            await upsertSkill(req.userId, skill.name, skill.strength, skill.count, "GITHUB");
         }
 
         const topicHits = matchText(data.topics.join(" "));
         for (const hit of topicHits) {
-            await upsertSkill(req.user.id, hit.name, Math.min(0.6, hit.count * 0.2), hit.count, "GITHUB");
+            await upsertSkill(req.userId, hit.name, Math.min(0.6, hit.count * 0.2), hit.count, "GITHUB");
         }
 
         await prisma.user.update({
-            where: { id: req.user.id },
+            where: { id: req.userId },
             data: { githubUsername: normalized, githubSyncedAt: new Date() },
         });
 
-        const saved = await prisma.userSkill.findMany({ where: { userId: req.user.id } });
+        const saved = await prisma.userSkill.findMany({ where: { userId: req.userId } });
 
         return res.json({ message: "GitHub profile synced", skills: saved });
     } catch (error) {
@@ -208,7 +208,7 @@ router.delete("/skills/:skillId", authMiddleware, async (req, res) => {
             return res.status(404).json({ message: "Skill not found" });
         }
 
-        if (skill.userId !== req.user.id) {
+        if (skill.userId !== req.userId) {
             return res.status(403).json({ message: "You can only delete your own skills" });
         }
 

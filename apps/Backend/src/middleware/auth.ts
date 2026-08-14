@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
 export interface AuthRequest extends Request {
-  userId?: string;
+  userId: string;
 }
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
@@ -21,8 +21,10 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
     return res.status(401).json({ message: "Unauthorized: Malformed token" });
   }
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as unknown as jwt.JwtPayload & { userid: string };
-    req.userId = decoded.userid;
+    const decoded = jwt.verify(token, JWT_SECRET) as unknown as jwt.JwtPayload & { userid?: string; userId?: string; id?: string };
+    const id = decoded.userid || decoded.userId || decoded.id || "";
+    req.userId = id;
+    (req as any).user = { id };
     next();
   } catch (err) {
     if (err instanceof jwt.TokenExpiredError) {

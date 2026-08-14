@@ -2,9 +2,19 @@
 
 import axios from "axios";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { motion, type Variants } from "motion/react";
+import { Upload, Sparkles, Search, Trash2 } from "lucide-react";
 import RequireAuth from "../components/RequireAuth";
 import Header from "../components/Header";
 import { getSkillDictionary } from "@repo/shared";
+
+function GithubIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-2.15c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.34.96.11-.75.4-1.25.73-1.54-2.55-.29-5.23-1.28-5.23-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.39-5.25 5.68.41.35.78 1.05.78 2.12v3.14c0 .3.21.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z" />
+    </svg>
+  );
+}
 
 const API = "http://localhost:3001/api";
 
@@ -26,10 +36,20 @@ function getErrorMessage(err: unknown, fallback: string) {
   return fallback;
 }
 
-const SOURCE_BADGE: Record<userSkill["source"], string> = {
-  RESUME: "bg-blue-400/10 text-blue-400",
-  GITHUB: "bg-purple-400/10 text-purple-400",
-  MANUAL: "bg-green-400/10 text-green-400",
+const SOURCE_BADGE: Record<userSkill["source"], { bg: string; text: string }> = {
+  RESUME: { bg: "bg-blue-400/10", text: "text-blue-400" },
+  GITHUB: { bg: "bg-purple-400/10", text: "text-purple-400" },
+  MANUAL: { bg: "bg-emerald-400/10", text: "text-emerald-400" },
+};
+
+const container: Variants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
+};
+
+const sectionItem: Variants = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } },
 };
 
 export default function ProfilePage() {
@@ -148,183 +168,271 @@ export default function ProfilePage() {
 
   return (
     <RequireAuth>
-      <div className="min-h-screen bg-black text-white font-[family-name:var(--font-inter)]">
+      <div className="min-h-screen bg-black font-[family-name:var(--font-inter)] text-white">
         <Header active="profile" />
-        <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+
+        <main className="mx-auto max-w-4xl px-6 py-8 lg:px-8">
           {error && (
-            <div className="p-3 bg-red-400/10 border border-red-400/20 text-red-400 rounded-xl text-sm">
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 rounded-xl border border-red-400/20 bg-red-400/10 p-3.5 text-sm text-red-400"
+            >
               {error}
-            </div>
+            </motion.div>
           )}
           {notice && (
-            <div className="p-3 bg-green-400/10 border border-green-400/20 text-green-400 rounded-xl text-sm">
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-3.5 text-sm text-emerald-400"
+            >
               {notice}
-            </div>
+            </motion.div>
           )}
 
-          <section className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5 space-y-3">
-            <h2 className="font-semibold text-white">Link GitHub</h2>
-            <form onSubmit={handleGithubSync} className="flex gap-2">
-              <input
-                type="text"
-                value={githubInput}
-                onChange={(e) => setGithubInput(e.target.value)}
-                placeholder="GitHub username"
-                className="flex-1 max-w-xs bg-black border border-white/10 rounded-xl h-11 px-4 text-sm text-white placeholder:text-white/20 outline-none focus:ring-2 focus:ring-white/20 transition-shadow duration-200"
-              />
-              <button
-                type="submit"
-                disabled={syncingGithub}
-                className="bg-white text-black px-4 py-2 rounded-xl text-sm font-semibold hover:bg-white/90 transition-colors disabled:opacity-50"
-              >
-                {syncingGithub ? "Syncing..." : "Sync"}
-              </button>
-            </form>
-            <p className="text-xs text-white/40">
-              {githubUsername
-                ? `Linked to @${githubUsername}${
-                    githubSyncedAt
-                      ? ` · synced ${new Date(githubSyncedAt).toLocaleString()}`
-                      : ""
-                  }`
-                : "Connect your GitHub username to auto-extract skills from your repos."}
-            </p>
-          </section>
-
-          <section className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5 space-y-3">
-            <h2 className="font-semibold text-white">Upload resume</h2>
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".pdf,.txt"
-              disabled={uploading}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleUpload(file);
-              }}
-              className="block w-full text-sm text-white/40 file:mr-3 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-white file:text-black file:text-sm file:font-semibold file:hover:bg-white/90 file:transition-colors disabled:opacity-50"
-            />
-            {uploading && (
-              <p className="text-xs text-white/40">Parsing resume...</p>
-            )}
-            {parsed && (
-              <div>
-                <p className="text-xs font-medium text-white/40 mb-1">
-                  Found in resume:
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {parsed.map((h) => (
-                    <span
-                      key={h.name}
-                      className="text-xs bg-black border border-white/10 rounded-full px-2.5 py-1 text-white"
-                    >
-                      {h.name} ×{h.count}
-                    </span>
-                  ))}
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="space-y-6"
+          >
+            {/* Link GitHub */}
+            <motion.section
+              variants={sectionItem}
+              className="rounded-2xl border border-white/10 bg-[#1a1a1a] p-5 space-y-4"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-400/10">
+                  <GithubIcon className="h-4 w-4 text-purple-400" />
                 </div>
+                <h2 className="font-[family-name:var(--font-manrope)] text-[15px] font-semibold text-white">
+                  Link GitHub
+                </h2>
               </div>
-            )}
-          </section>
-
-          <section className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5 space-y-3">
-            <h2 className="font-semibold text-white">
-              My skills ({skills.length})
-            </h2>
-            {skills.length === 0 && (
-              <p className="text-sm text-white/40">
-                No skills yet. Upload a resume, link GitHub, or add skills
-                manually below.
+              <form onSubmit={handleGithubSync} className="flex gap-3">
+                <input
+                  type="text"
+                  value={githubInput}
+                  onChange={(e) => setGithubInput(e.target.value)}
+                  placeholder="GitHub username"
+                  className="flex-1 max-w-xs rounded-xl border-none bg-black h-11 px-4 text-sm text-white placeholder:text-white/20 outline-none focus:ring-2 focus:ring-white/20 transition-shadow duration-200"
+                />
+                <button
+                  type="submit"
+                  disabled={syncingGithub}
+                  className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-black transition-all duration-200 hover:bg-white/90 active:scale-[0.97] disabled:opacity-50"
+                >
+                  {syncingGithub ? "Syncing..." : "Sync"}
+                </button>
+              </form>
+              <p className="text-xs text-white/30">
+                {githubUsername
+                  ? `Linked to @${githubUsername}${
+                      githubSyncedAt
+                        ? ` · synced ${new Date(githubSyncedAt).toLocaleString()}`
+                        : ""
+                    }`
+                  : "Connect your GitHub username to auto-extract skills from your repos."}
               </p>
-            )}
-            <ul className="space-y-3">
-              {skills.map((skill) => (
-                <li key={skill.id} className="flex items-center gap-3">
-                  <span className="w-40 text-sm text-white truncate">
-                    {skill.name}
-                  </span>
-                  <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-white rounded-full"
-                      style={{ width: `${Math.round(skill.strength * 100)}%` }}
-                    />
-                  </div>
-                  <span className="text-xs text-white/40 w-10 text-right">
-                    {Math.round(skill.strength * 100)}%
-                  </span>
-                  <span
-                    className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
-                      SOURCE_BADGE[skill.source]
-                    }`}
-                  >
-                    {skill.source}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteSkill(skill)}
-                    className="text-xs text-white/40 hover:text-red-400 transition-colors"
-                    title="Delete skill"
-                  >
-                    &times;
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
+            </motion.section>
 
-          <section className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5 space-y-3">
-            <h2 className="font-semibold text-white">Add skills manually</h2>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search skills..."
-              className="w-full bg-black border border-white/10 rounded-xl h-11 px-4 text-sm text-white placeholder:text-white/20 outline-none focus:ring-2 focus:ring-white/20 transition-shadow duration-200"
-            />
-            <form onSubmit={handleSaveManual} className="space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto">
-                {filteredDictionary.slice(0, 40).map((name) => {
-                  const value = manual[name] ?? 0;
-                  return (
-                    <label
-                      key={name}
-                      className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-sm cursor-pointer transition-colors ${
-                        value > 0
-                          ? "border-white bg-white/10 text-white"
-                          : "border-white/10 bg-black text-white/40 hover:border-white/30"
-                      }`}
-                    >
-                      <span className="truncate">{name}</span>
-                      <select
-                        value={value}
-                        onChange={(e) =>
-                          setManual((prev) => ({
-                            ...prev,
-                            [name]: Number(e.target.value),
-                          }))
-                        }
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-xs bg-[#1a1a1a] border border-white/10 rounded px-1 py-0.5 text-white"
+            {/* Upload Resume */}
+            <motion.section
+              variants={sectionItem}
+              className="rounded-2xl border border-white/10 bg-[#1a1a1a] p-5 space-y-4"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-400/10">
+                  <Upload size={16} className="text-blue-400" />
+                </div>
+                <h2 className="font-[family-name:var(--font-manrope)] text-[15px] font-semibold text-white">
+                  Upload resume
+                </h2>
+              </div>
+              <div
+                onClick={() => fileRef.current?.click()}
+                className="cursor-pointer rounded-xl border-2 border-dashed border-white/10 bg-black/40 px-6 py-8 text-center transition-colors hover:border-white/20"
+              >
+                <Upload size={24} className="mx-auto mb-2 text-white/20" />
+                <p className="text-sm text-white/40">
+                  Click to upload <span className="text-white/60">PDF</span> or{" "}
+                  <span className="text-white/60">TXT</span>
+                </p>
+                <p className="mt-1 text-xs text-white/20">
+                  Skills will be automatically extracted
+                </p>
+              </div>
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".pdf,.txt"
+                disabled={uploading}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleUpload(file);
+                }}
+                className="hidden"
+              />
+              {uploading && (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin-slow h-4 w-4 rounded-full border-2 border-transparent border-t-[#7b39fc]" />
+                  <p className="text-xs text-white/40">Parsing resume...</p>
+                </div>
+              )}
+              {parsed && (
+                <div>
+                  <p className="mb-2 text-xs font-medium text-white/40">
+                    Found in resume:
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {parsed.map((h) => (
+                      <span
+                        key={h.name}
+                        className="rounded-lg border border-white/10 bg-black px-2.5 py-1 text-xs text-white"
                       >
-                        <option value={0}>–</option>
-                        {[1, 2, 3, 4, 5].map((n) => (
-                          <option key={n} value={n}>
-                            {n}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                        {h.name}{" "}
+                        <span className="text-white/40">×{h.count}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </motion.section>
+
+            {/* My Skills */}
+            <motion.section
+              variants={sectionItem}
+              className="rounded-2xl border border-white/10 bg-[#1a1a1a] p-5 space-y-4"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#7b39fc]/10">
+                  <Sparkles size={16} className="text-[#7b39fc]" />
+                </div>
+                <h2 className="font-[family-name:var(--font-manrope)] text-[15px] font-semibold text-white">
+                  My skills{" "}
+                  <span className="text-white/30">({skills.length})</span>
+                </h2>
+              </div>
+              {skills.length === 0 && (
+                <p className="text-sm text-white/30">
+                  No skills yet. Upload a resume, link GitHub, or add skills
+                  manually below.
+                </p>
+              )}
+              <ul className="space-y-2.5">
+                {skills.map((skill) => {
+                  const badge = SOURCE_BADGE[skill.source];
+                  return (
+                    <li
+                      key={skill.id}
+                      className="group flex items-center gap-3 rounded-xl bg-black/40 border border-white/[0.06] px-4 py-2.5"
+                    >
+                      <span className="w-32 truncate text-sm font-medium text-white sm:w-40">
+                        {skill.name}
+                      </span>
+                      <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-[#7b39fc] to-white"
+                          style={{
+                            width: `${Math.round(skill.strength * 100)}%`,
+                          }}
+                        />
+                      </div>
+                      <span className="w-10 text-right text-xs text-white/40">
+                        {Math.round(skill.strength * 100)}%
+                      </span>
+                      <span
+                        className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${badge.bg} ${badge.text}`}
+                      >
+                        {skill.source}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSkill(skill)}
+                        className="rounded-lg p-1 text-white/20 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-400/10 hover:text-red-400"
+                        title="Delete skill"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </li>
                   );
                 })}
+              </ul>
+            </motion.section>
+
+            {/* Add Skills Manually */}
+            <motion.section
+              variants={sectionItem}
+              className="rounded-2xl border border-white/10 bg-[#1a1a1a] p-5 space-y-4"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-400/10">
+                  <Search size={16} className="text-emerald-400" />
+                </div>
+                <h2 className="font-[family-name:var(--font-manrope)] text-[15px] font-semibold text-white">
+                  Add skills manually
+                </h2>
               </div>
-              <button
-                type="submit"
-                disabled={savingManual}
-                className="bg-white text-black px-4 py-2 rounded-xl text-sm font-semibold hover:bg-white/90 transition-colors disabled:opacity-50"
-              >
-                {savingManual ? "Saving..." : "Save manual skills"}
-              </button>
-            </form>
-          </section>
+              <div className="relative">
+                <Search
+                  size={15}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20"
+                />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search skills..."
+                  className="w-full rounded-xl border-none bg-black h-11 pl-10 pr-4 text-sm text-white placeholder:text-white/20 outline-none focus:ring-2 focus:ring-white/20 transition-shadow duration-200"
+                />
+              </div>
+              <form onSubmit={handleSaveManual} className="space-y-4">
+                <div className="grid max-h-72 grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2">
+                  {filteredDictionary.slice(0, 40).map((name) => {
+                    const value = manual[name] ?? 0;
+                    return (
+                      <label
+                        key={name}
+                        className={`flex cursor-pointer items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-sm transition-all duration-200 ${
+                          value > 0
+                            ? "border-[#7b39fc]/30 bg-[#7b39fc]/[0.08] text-white"
+                            : "border-white/[0.06] bg-black/40 text-white/40 hover:border-white/15 hover:text-white/60"
+                        }`}
+                      >
+                        <span className="truncate">{name}</span>
+                        <select
+                          value={value}
+                          onChange={(e) =>
+                            setManual((prev) => ({
+                              ...prev,
+                              [name]: Number(e.target.value),
+                            }))
+                          }
+                          onClick={(e) => e.stopPropagation()}
+                          className="rounded-lg border border-white/10 bg-black px-1.5 py-0.5 text-xs text-white outline-none"
+                        >
+                          <option value={0}>–</option>
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <option key={n} value={n}>
+                              {n}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    );
+                  })}
+                </div>
+                <button
+                  type="submit"
+                  disabled={savingManual}
+                  className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-black transition-all duration-200 hover:bg-white/90 active:scale-[0.97] disabled:opacity-50"
+                >
+                  {savingManual ? "Saving..." : "Save manual skills"}
+                </button>
+              </form>
+            </motion.section>
+          </motion.div>
         </main>
       </div>
     </RequireAuth>

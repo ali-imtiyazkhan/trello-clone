@@ -1,11 +1,11 @@
 import { Router } from "express";
-import type { Request, Response } from "express";
+import type { Response } from "express";
 import { prisma } from "prisma";
-import { authMiddleware } from "../middleware/auth";
+import { authMiddleware, type AuthRequest } from "../middleware/auth";
 
 const route = Router();
 
-route.post("/", authMiddleware, async (req: Request, res: Response) => {
+route.post("/", authMiddleware, async (req: AuthRequest, res: Response) => {
   const { name, description } = req.body;
 
   if (!name) {
@@ -16,16 +16,16 @@ route.post("/", authMiddleware, async (req: Request, res: Response) => {
     data: {
       name,
       description,
-      memberships: { create: { userId: req.user.id, role: "OWNER" } },
+      memberships: { create: { userId: req.userId, role: "OWNER" } },
     },
   });
 
   res.status(201).json({ message: "Organization created successfully", org });
 });
 
-route.get("/", authMiddleware, async (req: Request, res: Response) => {
+route.get("/", authMiddleware, async (req: AuthRequest, res: Response) => {
   const memberships = await prisma.membership.findMany({
-    where: { userId: req.user.id },
+    where: { userId: req.userId },
     include: {
       organization: {
         select: {
@@ -48,12 +48,12 @@ route.get("/", authMiddleware, async (req: Request, res: Response) => {
   res.json({ organizations });
 });
 
-route.get("/:id", authMiddleware, async (req: Request, res: Response) => {
+route.get("/:id", authMiddleware, async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
 
   const membership = await prisma.membership.findUnique({
     where: {
-      userId_orgId: { userId: req.user.id, orgId: id },
+      userId_orgId: { userId: req.userId, orgId: id },
     },
     include: {
       organization: {
@@ -87,12 +87,12 @@ route.get("/:id", authMiddleware, async (req: Request, res: Response) => {
   res.json({ organization: { ...membership.organization, role: membership.role } });
 });
 
-route.put("/:id", authMiddleware, async (req: Request, res: Response) => {
+route.put("/:id", authMiddleware, async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
   const { name, description } = req.body;
 
   const membership = await prisma.membership.findUnique({
-    where: { userId_orgId: { userId: req.user.id, orgId: id } },
+    where: { userId_orgId: { userId: req.userId, orgId: id } },
   });
 
   if (!membership || membership.role !== "OWNER") {
@@ -108,11 +108,11 @@ route.put("/:id", authMiddleware, async (req: Request, res: Response) => {
   res.json({ message: "Organization updated successfully", org });
 });
 
-route.delete("/:id", authMiddleware, async (req: Request, res: Response) => {
+route.delete("/:id", authMiddleware, async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
 
   const membership = await prisma.membership.findUnique({
-    where: { userId_orgId: { userId: req.user.id, orgId: id } },
+    where: { userId_orgId: { userId: req.userId, orgId: id } },
   });
 
   if (!membership || membership.role !== "OWNER") {
@@ -124,11 +124,11 @@ route.delete("/:id", authMiddleware, async (req: Request, res: Response) => {
   res.json({ message: "Organization deleted successfully" });
 });
 
-route.get("/:id/members", authMiddleware, async (req: Request, res: Response) => {
+route.get("/:id/members", authMiddleware, async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
 
   const membership = await prisma.membership.findUnique({
-    where: { userId_orgId: { userId: req.user.id, orgId: id } },
+    where: { userId_orgId: { userId: req.userId, orgId: id } },
   });
 
   if (!membership) {
@@ -143,12 +143,12 @@ route.get("/:id/members", authMiddleware, async (req: Request, res: Response) =>
   res.json({ members });
 });
 
-route.post("/:id/members", authMiddleware, async (req: Request, res: Response) => {
+route.post("/:id/members", authMiddleware, async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
   const { userId, role } = req.body;
 
   const membership = await prisma.membership.findUnique({
-    where: { userId_orgId: { userId: req.user.id, orgId: id } },
+    where: { userId_orgId: { userId: req.userId, orgId: id } },
   });
 
   if (!membership || (membership.role !== "OWNER" && membership.role !== "ADMIN")) {
@@ -176,19 +176,19 @@ route.post("/:id/members", authMiddleware, async (req: Request, res: Response) =
   res.status(201).json({ message: "Member added successfully", member: newMember });
 });
 
-route.delete("/:id/members/:userId", authMiddleware, async (req: Request, res: Response) => {
+route.delete("/:id/members/:userId", authMiddleware, async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
   const userId = req.params.userId as string;
 
   const membership = await prisma.membership.findUnique({
-    where: { userId_orgId: { userId: req.user.id, orgId: id } },
+    where: { userId_orgId: { userId: req.userId, orgId: id } },
   });
 
   if (!membership || (membership.role !== "OWNER" && membership.role !== "ADMIN")) {
     return res.status(403).json({ message: "Insufficient permissions" });
   }
 
-  if (userId === req.user.id) {
+  if (userId === req.userId) {
     return res.status(400).json({ message: "Cannot remove yourself" });
   }
 
@@ -211,13 +211,13 @@ route.delete("/:id/members/:userId", authMiddleware, async (req: Request, res: R
   res.json({ message: "Member removed successfully" });
 });
 
-route.put("/:id/members/:userId", authMiddleware, async (req: Request, res: Response) => {
+route.put("/:id/members/:userId", authMiddleware, async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
   const userId = req.params.userId as string;
   const { role } = req.body;
 
   const membership = await prisma.membership.findUnique({
-    where: { userId_orgId: { userId: req.user.id, orgId: id } },
+    where: { userId_orgId: { userId: req.userId, orgId: id } },
   });
 
   if (!membership || membership.role !== "OWNER") {

@@ -38,7 +38,7 @@ router.post("/", authMiddleware, async (req, res) => {
         const membership = await prisma.membership.findUnique({
             where: {
                 userId_orgId: {
-                    userId: req.user.id,
+                    userId: req.userId,
                     orgId: section.board.organizationId,
                 },
             },
@@ -65,7 +65,7 @@ router.post("/", authMiddleware, async (req, res) => {
                 description: true,
                 requiredSkills: true,
                 boardId: true,
-                sectionId
+                sectionId: true
             }
         })
 
@@ -117,7 +117,7 @@ router.get("/:sectionId", authMiddleware, async (req, res) => {
         const membership = await prisma.membership.findUnique({
             where: {
                 userId_orgId: {
-                    userId: req.user.id,
+                    userId: req.userId,
                     orgId: section.board.organizationId,
                 },
             },
@@ -192,7 +192,7 @@ router.get(
                 where: {
                     userId_orgId: {
                         orgId: section.board.organizationId,
-                        userId: req.user.id,
+                        userId: req.userId,
                     },
                 },
             });
@@ -275,7 +275,7 @@ router.put(
                 where: {
                     userId_orgId: {
                         orgId: section.board.organizationId,
-                        userId: req.user.id,
+                        userId: req.userId,
                     },
                 },
             });
@@ -331,7 +331,7 @@ router.put(
                     where: {
                         userId_orgId: {
                             orgId: targetSection.board.organizationId,
-                            userId: req.user.id,
+                            userId: req.userId,
                         },
                     },
                 });
@@ -419,7 +419,7 @@ router.delete(
                 where: {
                     userId_orgId: {
                         orgId: section.board.organizationId,
-                        userId: req.user.id,
+                        userId: req.userId,
                     },
                 },
             });
@@ -488,7 +488,7 @@ router.get(
             const membership = await prisma.membership.findUnique({
                 where: {
                     userId_orgId: {
-                        userId: req.user.id,
+                        userId: req.userId,
                         orgId: board.organizationId,
                     },
                 },
@@ -585,7 +585,7 @@ router.post(
                 where: {
                     userId_orgId: {
                         orgId: section.board.organizationId,
-                        userId: req.user.id,
+                        userId: req.userId,
                     },
                 },
             });
@@ -716,7 +716,7 @@ router.get(
                 where: {
                     userId_orgId: {
                         orgId: section.board.organizationId,
-                        userId: req.user.id,
+                        userId: req.userId,
                     },
                 },
             });
@@ -806,7 +806,7 @@ router.delete(
                 where: {
                     userId_orgId: {
                         orgId: section.board.organizationId,
-                        userId: req.user.id,
+                        userId: req.userId,
                     },
                 },
             });
@@ -905,7 +905,7 @@ router.post(
                 where: {
                     userId_orgId: {
                         orgId: section.board.organizationId,
-                        userId: req.user.id,
+                        userId: req.userId,
                     },
                 },
             });
@@ -932,7 +932,7 @@ router.post(
             const comment = await prisma.comment.create({
                 data: {
                     content,
-                    userId: req.user.id,
+                    userId: req.userId,
                     issueId: issueId as string,
                 },
                 include: {
@@ -997,7 +997,7 @@ router.get(
                 where: {
                     userId_orgId: {
                         orgId: section.board.organizationId,
-                        userId: req.user.id,
+                        userId: req.userId,
                     },
                 },
             });
@@ -1091,7 +1091,7 @@ router.put(
                 where: {
                     userId_orgId: {
                         orgId: section.board.organizationId,
-                        userId: req.user.id,
+                        userId: req.userId,
                     },
                 },
             });
@@ -1128,7 +1128,7 @@ router.put(
                 });
             }
 
-            if (comment.userId !== req.user.id) {
+            if (comment.userId !== req.userId) {
                 return res.status(403).json({
                     message: "You can only edit your own comments",
                 });
@@ -1199,7 +1199,7 @@ router.delete(
                 where: {
                     userId_orgId: {
                         orgId: section.board.organizationId,
-                        userId: req.user.id,
+                        userId: req.userId,
                     },
                 },
             });
@@ -1236,7 +1236,7 @@ router.delete(
                 });
             }
 
-            if (comment.userId !== req.user.id) {
+            if (comment.userId !== req.userId) {
                 return res.status(403).json({
                     message: "You can only delete your own comments",
                 });
@@ -1302,7 +1302,7 @@ router.put("/:sectionId/:issueId/skills", authMiddleware, async (req, res) => {
         const membership = await prisma.membership.findUnique({
             where: {
                 userId_orgId: {
-                    userId: req.user.id,
+                    userId: req.userId,
                     orgId: section.board.organizationId
                 }
             }
@@ -1379,7 +1379,7 @@ router.post("/:sectionId/:issueId/suggest", authMiddleware, async (req, res) => 
             where: {
                 userId_orgId: {
                     orgId: section.board.organizationId,
-                    userId: req.user.id,
+                    userId: req.userId,
                 },
             },
         });
