@@ -10,8 +10,8 @@ import { motion } from "motion/react";
 const API = "http://localhost:3001/api";
 
 const NAV_ITEMS = [
-  { label: "Boards", href: "/boards", key: "boards" as const },
   { label: "Organizations", href: "/organization", key: "orgs" as const },
+  { label: "Boards", href: "/boards", key: "boards" as const },
   { label: "Profile", href: "/profile", key: "profile" as const },
 ];
 
