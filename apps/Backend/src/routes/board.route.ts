@@ -30,7 +30,7 @@ router.post("/", authMiddleware, async (req, res) => {
         const membership = await prisma.membership.findUnique({
             where: {
                 userId_orgId: {
-                    userId: req.user.id,
+                    userId: req.userId,
                     orgId: organizationId
                 }
             }
@@ -45,7 +45,14 @@ router.post("/", authMiddleware, async (req, res) => {
         const result = await prisma.board.create({
             data: {
                 title: title,
-                organizationId
+                organizationId,
+                sections: {
+                    create: [
+                        { title: "To Do" },
+                        { title: "In Progress" },
+                        { title: "Done" }
+                    ]
+                }
             },
             select: {
                 id: true,
@@ -80,7 +87,7 @@ router.get("/", authMiddleware, async (req, res) => {
     const membership = await prisma.membership.findUnique({
         where: {
             userId_orgId: {
-                userId: req.user.id,
+                userId: req.userId,
                 orgId: orgId as string
             }
         }
@@ -115,36 +122,11 @@ router.get("/", authMiddleware, async (req, res) => {
 })
 
 router.get("/:id", authMiddleware, async (req, res) => {
-    const { id } = req.params
-    const { orgId } = req.query
-
-    if (!orgId) {
-        return res.status(400).json({
-            message: "orgId query param required"
-        })
-    }
+    const { id } = req.params;
 
     try {
-        const membership = await prisma.membership.findUnique({
-            where: {
-                userId_orgId: {
-                    userId: req.user.id,
-                    orgId: orgId as string
-                }
-            }
-        })
-
-        if (!membership) {
-            return res.status(403).json({
-                message: "Not a member of this org"
-            })
-        }
-
         const board = await prisma.board.findUnique({
-            where: {
-                id: id as string,
-                organizationId: orgId as string
-            },
+            where: { id: id as string },
             select: {
                 id: true,
                 title: true,
@@ -156,27 +138,31 @@ router.get("/:id", authMiddleware, async (req, res) => {
                     }
                 }
             }
-        })
+        });
 
         if (!board) {
-            return res.status(404).json({
-                message: "Board not found"
-            })
+            return res.status(404).json({ message: "Board not found" });
         }
 
-        return res.status(200).json({
-            message: "Board data retrieved successfully",
-            board
-        })
+        const membership = await prisma.membership.findUnique({
+            where: {
+                userId_orgId: {
+                    userId: req.userId,
+                    orgId: board.organizationId
+                }
+            }
+        });
 
+        if (!membership) {
+            return res.status(403).json({ message: "Not a member of this org" });
+        }
+
+        res.json({ board });
     } catch (error) {
         console.log(error);
-        res.status(500).json({
-            message: "internal server error"
-        })
+        res.status(500).json({ message: "internal server error" });
     }
-
-})
+});
 
 router.put("/:id", authMiddleware, async (req, res) => {
     const { id } = req.params
@@ -192,7 +178,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
         const membership = await prisma.membership.findUnique({
             where: {
                 userId_orgId: {
-                    userId: req.user.id,
+                    userId: req.userId,
                     orgId
                 }
             }
@@ -254,7 +240,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
         const membership = await prisma.membership.findUnique({
             where: {
                 userId_orgId: {
-                    userId: req.user.id,
+                    userId: req.userId,
                     orgId: orgId as string
                 }
             }

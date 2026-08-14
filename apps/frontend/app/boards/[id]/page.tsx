@@ -1,10 +1,24 @@
-﻿"use client";
+"use client";
 
 import axios from "axios";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { motion, AnimatePresence } from "motion/react";
+import {
+  ArrowLeft,
+  Pencil,
+  Trash2,
+  Plus,
+  MoreHorizontal,
+  MessageSquare,
+  Sparkles,
+  Users,
+  Send,
+  X,
+  Check,
+  Zap,
+} from "lucide-react";
 import Header from "../../components/Header";
 import RequireAuth from "../../components/RequireAuth";
 
@@ -60,7 +74,8 @@ function getErrorMessage(err: unknown, fallback: string) {
 }
 
 export default function BoardDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams();
+  const id = params?.id as string;
   const router = useRouter();
 
   const [sections, setSections] = useState<Section[]>([]);
@@ -89,9 +104,7 @@ export default function BoardDetailPage() {
 
   // section management
   const [menuSectionId, setMenuSectionId] = useState<string | null>(null);
-  const [renamingSectionId, setRenamingSectionId] = useState<string | null>(
-    null
-  );
+  const [renamingSectionId, setRenamingSectionId] = useState<string | null>(null);
   const [renameTitle, setRenameTitle] = useState("");
 
   // card modal
@@ -116,9 +129,7 @@ export default function BoardDetailPage() {
   const meIdRef = useRef("");
 
   const wsRef = useRef<WebSocket | null>(null);
-  const dragRef = useRef<{ issueId: string; sourceSectionId: string } | null>(
-    null
-  );
+  const dragRef = useRef<{ issueId: string; sourceSectionId: string } | null>(null);
 
   function send(payload: object) {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -189,19 +200,18 @@ export default function BoardDetailPage() {
     }
 
     try {
-      const res = await axios.get(`${API}/sections/board/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setSections(res.data.sections);
-
-      const orgId = res.data.sections[0]?.board?.organizationId;
-      if (orgId) {
-        setOrgId(orgId);
-        const boardRes = await axios.get(`${API}/boards/${id}`, {
-          params: { orgId },
+      const [sectionsRes, boardRes] = await Promise.all([
+        axios.get(`${API}/sections/board/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
-        });
+        }),
+        axios.get(`${API}/boards/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+      setSections(sectionsRes.data.sections ?? []);
+      if (boardRes.data.board) {
         setBoardTitle(boardRes.data.board.title);
+        setOrgId(boardRes.data.board.organizationId);
       }
     } catch (err) {
       setError(getErrorMessage(err, "Failed to load board"));
@@ -919,138 +929,180 @@ export default function BoardDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center text-text-secondary">
-        Loading...
+      <div className="flex min-h-screen flex-col items-center justify-center bg-black">
+        <div className="relative mb-6">
+          <div className="h-10 w-10 rounded-full border-2 border-white/10" />
+          <div className="animate-spin-slow absolute inset-0 h-10 w-10 rounded-full border-2 border-transparent border-t-[#7b39fc]" />
+        </div>
+        <span className="font-[family-name:var(--font-manrope)] text-sm text-white/40">
+          Loading board...
+        </span>
       </div>
     );
   }
 
   return (
     <RequireAuth>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-black font-[family-name:var(--font-inter)] text-white">
         <Header
           active="boards"
           right={
             <Link
               href="/boards"
-              className="text-sm text-text-secondary hover:text-text-primary transition-colors"
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-white/50 transition-colors hover:bg-white/[0.04] hover:text-white"
             >
-              &larr; Boards
+              <ArrowLeft size={14} /> Back to boards
             </Link>
           }
         />
 
-        <div className="border-b border-border bg-surface">
-          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-2">
-            {editingBoardTitle ? (
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={boardTitleInput}
-                  onChange={(e) => setBoardTitleInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") saveBoardTitle();
-                  }}
-                  autoFocus
-                  className="px-2 py-1 text-lg font-semibold border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-                <button
-                  type="button"
-                  onClick={saveBoardTitle}
-                  className="text-sm bg-white text-black px-3 py-1 rounded-md font-medium hover:bg-white/90 transition-colors"
-                >
-                  Save
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <h1 className="text-lg font-semibold text-text-primary">
-                  {boardTitle}
-                </h1>
-                <button
-                  type="button"
-                  onClick={startRenameBoard}
-                  className="text-xs text-text-secondary hover:text-text-primary transition-colors"
-                  title="Rename board"
-                >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDeleteBoard}
-                  className="text-xs text-text-secondary hover:text-red-400 transition-colors"
-                  title="Delete board"
-                >
-                  Delete
-                </button>
-              </div>
-            )}
-            <p className="text-xs text-text-secondary">
-              {connected ? (
-                activeUsers.length > 0 ? (
-                  <>
-                    {activeUsers.length} online:{" "}
-                    {activeUsers
-                      .map((u) => u.username || "anonymous")
-                      .join(", ")}
-                  </>
-                ) : (
-                  "Connected"
-                )
+        {/* Board Sub-header */}
+        <div className="glass-strong border-b border-white/10">
+          <div className="mx-auto flex max-w-7xl items-center justify-between flex-wrap gap-4 px-6 py-3.5 lg:px-8">
+            <div className="flex items-center gap-4">
+              {editingBoardTitle ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={boardTitleInput}
+                    onChange={(e) => setBoardTitleInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveBoardTitle();
+                    }}
+                    autoFocus
+                    className="rounded-xl border border-[#7b39fc]/40 bg-black px-3 py-1.5 text-lg font-bold text-white outline-none focus:ring-2 focus:ring-[#7b39fc]/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={saveBoardTitle}
+                    className="rounded-xl bg-[#7b39fc] px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#8d53ff]"
+                  >
+                    Save
+                  </button>
+                </div>
               ) : (
-                "Offline"
+                <div className="flex items-center gap-3">
+                  <h1 className="font-[family-name:var(--font-manrope)] text-lg font-bold tracking-tight text-white">
+                    {boardTitle}
+                  </h1>
+                  <button
+                    type="button"
+                    onClick={startRenameBoard}
+                    className="rounded-lg p-1.5 text-white/30 transition-colors hover:bg-white/[0.06] hover:text-white"
+                    title="Rename board"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteBoard}
+                    className="rounded-lg p-1.5 text-white/30 transition-colors hover:bg-red-400/10 hover:text-red-400"
+                    title="Delete board"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               )}
-            </p>
+            </div>
+
+            {/* Live presence indicator */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-[#1a1a1a] px-3 py-1 text-xs">
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    connected
+                      ? "bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.6)]"
+                      : "bg-white/20"
+                  }`}
+                />
+                <span className="text-white/60 font-medium">
+                  {connected
+                    ? activeUsers.length > 0
+                      ? `${activeUsers.length} online`
+                      : "Connected"
+                    : "Offline"}
+                </span>
+              </div>
+
+              {/* Stacked online user avatars */}
+              {activeUsers.length > 0 && (
+                <div className="flex -space-x-2">
+                  {activeUsers.slice(0, 4).map((u, i) => (
+                    <div
+                      key={u.userId || i}
+                      title={u.username || "anonymous"}
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-[#7b39fc] text-[10px] font-semibold text-white ring-2 ring-black"
+                    >
+                      {(u.username || "?").slice(0, 1).toUpperCase()}
+                    </div>
+                  ))}
+                  {activeUsers.length > 4 && (
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#2a2a2a] text-[10px] font-medium text-white/60 ring-2 ring-black">
+                      +{activeUsers.length - 4}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <main className="max-w-6xl mx-auto px-4 py-8">
-        {error && (
-          <div className="mb-4 p-3 bg-red-400/10 border border-red-400/20 text-red-400 rounded-md text-sm">
-            {error}
-          </div>
-        )}
-
-        <div className="flex gap-4 items-start overflow-x-auto pb-4">
-          {sections.map((section) => (
-            <div
-              key={section.id}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={() => handleMoveCard(section.id)}
-              className="w-64 shrink-0 bg-surface border border-border rounded-lg p-3 flex flex-col max-h-[70vh]"
+        {/* Board Main Area */}
+        <main className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 rounded-xl border border-red-400/20 bg-red-400/10 p-3.5 text-sm text-red-400"
             >
-              <div className="flex items-center justify-between mb-3 gap-2">
-                {renamingSectionId === section.id ? (
-                  <input
-                    type="text"
-                    value={renameTitle}
-                    onChange={(e) => setRenameTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") saveRenameSection(section);
-                      if (e.key === "Escape") setRenamingSectionId(null);
-                    }}
-                    autoFocus
-                    className="flex-1 px-2 py-1 text-sm font-medium border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                ) : (
-                  <h3 className="font-medium text-text-primary truncate">
-                    {section.title}
-                  </h3>
-                )}
-                <div className="flex items-center gap-1 shrink-0">
+              {error}
+            </motion.div>
+          )}
+
+          {/* Kanban board columns */}
+          <div className="flex items-start gap-5 overflow-x-auto pb-6">
+            {sections.map((section) => (
+              <div
+                key={section.id}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => handleMoveCard(section.id)}
+                className="flex max-h-[75vh] w-72 shrink-0 flex-col rounded-2xl border border-white/10 bg-[#141414] p-3.5 transition-all duration-200"
+              >
+                {/* Column header */}
+                <div className="mb-3 flex items-center justify-between gap-2">
                   {renamingSectionId === section.id ? (
-                    <button
-                      type="button"
-                      onClick={() => saveRenameSection(section)}
-                      className="text-xs bg-white text-black px-2 py-1 rounded font-medium hover:bg-white/90 transition-colors"
-                    >
-                      OK
-                    </button>
+                    <input
+                      type="text"
+                      value={renameTitle}
+                      onChange={(e) => setRenameTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveRenameSection(section);
+                        if (e.key === "Escape") setRenamingSectionId(null);
+                      }}
+                      autoFocus
+                      className="flex-1 rounded-lg border border-[#7b39fc]/40 bg-black px-2.5 py-1 text-sm font-medium text-white outline-none focus:ring-2 focus:ring-[#7b39fc]/30"
+                    />
                   ) : (
-                    <>
-                      <span className="text-xs text-text-secondary">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <h3 className="truncate font-[family-name:var(--font-manrope)] text-sm font-semibold text-white">
+                        {section.title}
+                      </h3>
+                      <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[11px] font-medium text-white/50">
                         {section._count.issues}
                       </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    {renamingSectionId === section.id ? (
+                      <button
+                        type="button"
+                        onClick={() => saveRenameSection(section)}
+                        className="rounded-lg bg-[#7b39fc] px-2.5 py-1 text-xs font-semibold text-white transition-colors hover:bg-[#8d53ff]"
+                      >
+                        OK
+                      </button>
+                    ) : (
                       <div className="relative">
                         <button
                           type="button"
@@ -1059,528 +1111,630 @@ export default function BoardDetailPage() {
                               prev === section.id ? null : section.id
                             )
                           }
-                          className="text-text-secondary hover:text-text-primary px-1 rounded hover:bg-background transition-colors"
+                          className="rounded-lg p-1 text-white/40 transition-colors hover:bg-white/[0.06] hover:text-white"
                           title="Section options"
                         >
-                          &hellip;
+                          <MoreHorizontal size={16} />
                         </button>
                         {menuSectionId === section.id && (
-                          <div className="absolute right-0 mt-1 z-20 bg-surface border border-border rounded-md shadow-sm overflow-hidden">
+                          <div className="absolute right-0 top-full z-20 mt-1.5 w-32 rounded-xl border border-white/10 bg-[#1e1e1e] p-1 shadow-xl">
                             <button
                               type="button"
                               onClick={() => startRenameSection(section)}
-                              className="block w-full text-left px-3 py-2 text-sm text-text-primary hover:bg-background transition-colors"
+                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-white/80 transition-colors hover:bg-white/[0.06] hover:text-white"
                             >
-                              Rename
+                              <Pencil size={12} /> Rename
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDeleteSection(section)}
-                              className="block w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-background transition-colors"
+                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-red-400 transition-colors hover:bg-red-400/10"
                             >
-                              Delete
+                              <Trash2 size={12} /> Delete
                             </button>
                           </div>
                         )}
                       </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2 overflow-y-auto">
-                {section.issues.map((issue) => (
-                  <div
-                    key={issue.id}
-                    draggable
-                    onDragStart={(e) => {
-                      dragRef.current = {
-                        issueId: issue.id,
-                        sourceSectionId: section.id,
-                      };
-                      e.dataTransfer.effectAllowed = "move";
-                      e.dataTransfer.setData("text/plain", issue.id);
-                    }}
-                    onDragEnd={() => {
-                      dragRef.current = null;
-                    }}
-                    onClick={() => openCard(issue)}
-                    className="group bg-background border border-border rounded-md p-3 cursor-pointer hover:border-primary/50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm text-text-primary break-words">
-                        {issue.title}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteCard(section.id, issue);
-                        }}
-                        className="hidden group-hover:block text-text-secondary hover:text-red-400 text-xs shrink-0"
-                        title="Delete card"
-                      >
-                        &times;
-                      </button>
-                    </div>
-
-                    {issue.description && (
-                      <p className="mt-1 text-xs text-text-secondary line-clamp-2">
-                        {issue.description}
-                      </p>
                     )}
-
-                    <div className="mt-2 flex items-center justify-between">
-                      <div className="flex -space-x-1.5">
-                        {issue.assignees.map(({ user }) => (
-                          <span
-                            key={user.id}
-                            title={user.username}
-                            className="w-6 h-6 rounded-full bg-white text-black text-[10px] font-medium flex items-center justify-center border-2 border-background"
-                          >
-                            {user.username.slice(0, 1).toUpperCase()}
-                          </span>
-                        ))}
-                      </div>
-                      {issue._count?.comments ? (
-                        <span className="text-[11px] text-text-secondary">
-                          {issue._count.comments} comment
-                          {issue._count.comments === 1 ? "" : "s"}
-                        </span>
-                      ) : null}
-                    </div>
                   </div>
-                ))}
-              </div>
-
-              <form
-                onSubmit={(e) => handleCreateCard(e, section.id)}
-                className="mt-3 flex gap-2"
-              >
-                <input
-                  type="text"
-                  value={cardTitles[section.id] ?? ""}
-                  onChange={(e) =>
-                    setCardTitles((prev) => ({
-                      ...prev,
-                      [section.id]: e.target.value,
-                    }))
-                  }
-                  placeholder="Add a card"
-                  className="flex-1 px-2 py-1.5 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-                <button
-                  type="submit"
-                  className="bg-white text-black px-3 py-1.5 rounded-md text-sm font-medium hover:bg-white/90 transition-colors"
-                >
-                  Add
-                </button>
-              </form>
-            </div>
-          ))}
-        </div>
-
-        <form onSubmit={handleCreateSection} className="mt-8 flex gap-2">
-          <input
-            type="text"
-            value={sectionTitle}
-            onChange={(e) => setSectionTitle(e.target.value)}
-            placeholder="Enter section title"
-            required
-            disabled={creating}
-            className="flex-1 max-w-sm px-3 py-2 border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50"
-          />
-          <button
-            type="submit"
-            disabled={creating}
-            className="bg-white text-black px-4 py-2 rounded-md font-medium hover:bg-white/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {creating ? "Creating..." : "Add section"}
-          </button>
-        </form>
-      </main>
-
-      {selectedIssue && (
-        <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
-          onClick={() => {
-            setSelectedIssue(null);
-            setShowMembers(false);
-            setSuggestOpen(false);
-          }}
-        >
-          <div
-            className="bg-surface border border-border rounded-lg shadow-lg w-full max-w-lg max-h-[85vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between p-5 pb-0">
-              <h2 className="text-lg font-semibold text-text-primary">
-                Card details
-              </h2>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedIssue(null);
-                  setShowMembers(false);
-                  setSuggestOpen(false);
-                }}
-                className="text-text-secondary hover:text-text-primary text-lg leading-none"
-                title="Close"
-              >
-                &times;
-              </button>
-            </div>
-
-            <div className="p-5 space-y-4 overflow-y-auto">
-              <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  value={issueTitle}
-                  onChange={(e) => setIssueTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1">
-                  Description
-                </label>
-                <textarea
-                  value={issueDescription}
-                  onChange={(e) => setIssueDescription(e.target.value)}
-                  rows={3}
-                  placeholder="Add a more detailed description..."
-                  className="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={saveCard}
-                  disabled={savingIssue}
-                  className="bg-white text-black px-4 py-2 rounded-md text-sm font-medium hover:bg-white/90 transition-colors disabled:opacity-50"
-                >
-                  {savingIssue ? "Saving..." : "Save"}
-                </button>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1">
-                  Assignees
-                </label>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {selectedIssue.assignees.map(({ user }) => (
-                    <span
-                      key={user.id}
-                      onClick={() =>
-                        toggleAssignee({ user } as Member)
-                      }
-                      className="cursor-pointer bg-primary/10 text-text-primary text-xs font-medium rounded-full px-2.5 py-1 hover:bg-red-400/10 hover:text-red-400 transition-colors"
-                      title={`Remove ${user.username}`}
-                    >
-                      {user.username}
-                    </span>
-                  ))}
-                  {selectedIssue.assignees.length === 0 && (
-                    <span className="text-xs text-text-secondary">
-                      No assignees
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setShowMembers((v) => !v)}
-                    className="text-xs bg-surface border border-border text-text-primary rounded-full px-2.5 py-1 hover:border-primary/50 transition-colors"
-                  >
-                    + Assign
-                  </button>
                 </div>
 
-                {showMembers && (
-                  <div className="mt-2 border border-border rounded-md bg-background overflow-hidden">
-                    {members.map((member) => (
-                      <button
-                        key={member.user.id}
-                        type="button"
-                        onClick={() => toggleAssignee(member)}
-                        className="w-full text-left px-3 py-2 text-sm text-text-primary hover:bg-surface flex items-center justify-between transition-colors"
-                      >
-                        <span>
-                          {member.user.username}
-                          {member.user.id === meId && (
-                            <span className="ml-1 text-xs text-text-secondary">
-                              (you)
-                            </span>
-                          )}
-                        </span>
-                        <span
-                          className={
-                            isAssigned(member.user.id)
-                              ? "text-primary"
-                              : "text-text-secondary"
-                          }
+                {/* Cards list */}
+                <div className="space-y-2.5 overflow-y-auto pr-0.5">
+                  {section.issues.map((issue) => (
+                    <div
+                      key={issue.id}
+                      draggable
+                      onDragStart={(e) => {
+                        dragRef.current = {
+                          issueId: issue.id,
+                          sourceSectionId: section.id,
+                        };
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData("text/plain", issue.id);
+                      }}
+                      onDragEnd={() => {
+                        dragRef.current = null;
+                      }}
+                      onClick={() => openCard(issue)}
+                      className="group cursor-pointer rounded-xl border border-white/[0.06] bg-[#1e1e1e] p-3.5 transition-all duration-200 hover:border-[#7b39fc]/30 hover:shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="break-words text-sm font-medium text-white/90 group-hover:text-white">
+                          {issue.title}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCard(section.id, issue);
+                          }}
+                          className="hidden shrink-0 rounded p-0.5 text-white/30 transition-colors group-hover:block hover:bg-red-400/10 hover:text-red-400"
+                          title="Delete card"
                         >
-                          {isAssigned(member.user.id) ? "✓ Assigned" : "Assign"}
-                        </span>
-                      </button>
-                    ))}
-                    {members.length === 0 && (
-                      <p className="px-3 py-2 text-sm text-text-secondary">
-                        No members to assign
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-4">
-                <label className="block text-xs font-medium text-text-secondary mb-1">
-                  Required skills
-                </label>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {(selectedIssue.requiredSkills ?? []).map((skill) => (
-                    <span
-                      key={skill}
-                      className="inline-flex items-center gap-1 bg-background border border-border text-xs text-text-primary rounded-full px-2.5 py-1"
-                    >
-                      {skill}
-                      <button
-                        type="button"
-                        onClick={() => removeRequiredSkill(skill)}
-                        className="text-text-secondary hover:text-red-400"
-                        title="Remove skill"
-                      >
-                        &times;
-                      </button>
-                    </span>
-                  ))}
-                  {(selectedIssue.requiredSkills ?? []).length === 0 && (
-                    <span className="text-xs text-text-secondary">
-                      No required skills — set them in the card title/description
-                    </span>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={suggestAssignees}
-                  disabled={suggesting}
-                  className="mt-3 w-full bg-white text-black px-4 py-2 rounded-md text-sm font-medium hover:bg-white/90 transition-colors disabled:opacity-50"
-                >
-                  {suggesting ? "Scoring members..." : "Suggest assignee"}
-                </button>
-
-                {suggestOpen && suggestions.length > 0 && (
-                  <div className="mt-3 border border-border rounded-md bg-background divide-y divide-border">
-                    {suggestions.map((c, i) => (
-                      <div key={c.userId} className="p-3 flex items-center gap-3">
-                        <span className="w-6 text-center text-xs font-medium text-text-secondary">
-                          {i + 1}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-sm text-text-primary truncate">
-                              {c.username}
-                            </span>
-                            <span className="text-xs text-text-secondary">
-                              score {c.score} · precision{" "}
-                              {Math.round(c.precision * 100)}% · load {c.load}
-                            </span>
-                          </div>
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {c.matchedSkills.map((m) => (
-                              <span
-                                key={m.skill}
-                                className="text-[11px] bg-green-400/10 text-green-400 rounded-full px-2 py-0.5"
-                              >
-                                {m.skill} {Math.round(m.strength * 100)}%
-                              </span>
-                            ))}
-                            {c.missingSkills.map((m) => (
-                              <span
-                                key={m}
-                                className="text-[11px] bg-red-400/10 text-red-400 rounded-full px-2 py-0.5"
-                              >
-                                missing: {m}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        {isAssigned(c.userId) ? (
-                          <span className="text-xs text-primary shrink-0">
-                            ✓ Assigned
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              toggleAssignee({
-                                user: {
-                                  id: c.userId,
-                                  username: c.username,
-                                  email: "",
-                                },
-                              });
-                              emitAssignment(c);
-                            }}
-                            className="text-xs bg-white text-black px-3 py-1 rounded-md font-medium hover:bg-white/90 transition-colors shrink-0"
-                          >
-                            Assign
-                          </button>
-                        )}
+                          <X size={13} />
+                        </button>
                       </div>
-                    ))}
-                  </div>
-                )}
-                {suggestOpen && suggestions.length === 0 && (
-                  <p className="mt-3 text-xs text-text-secondary">
-                    No candidates found.
-                  </p>
-                )}
-              </div>
 
-              <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1">
-                  Comments ({comments.length})
-                </label>
-                <ul className="space-y-2 mb-3">
-                  {comments.map((comment) => (
-                    <li
-                      key={comment.id}
-                      className="bg-background border border-border rounded-md p-3"
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium text-text-primary">
-                          {comment.user.username}
-                          {comment.user.id === meId && (
-                            <span className="ml-1 text-text-secondary font-normal">
-                              (you)
+                      {issue.description && (
+                        <p className="mt-1.5 line-clamp-2 text-xs text-white/40">
+                          {issue.description}
+                        </p>
+                      )}
+
+                      {/* Required skills tags preview */}
+                      {(issue.requiredSkills ?? []).length > 0 && (
+                        <div className="mt-2.5 flex flex-wrap gap-1">
+                          {issue.requiredSkills.slice(0, 2).map((skill) => (
+                            <span
+                              key={skill}
+                              className="rounded-md bg-[#7b39fc]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#a87aff]"
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                          {issue.requiredSkills.length > 2 && (
+                            <span className="text-[10px] text-white/30">
+                              +{issue.requiredSkills.length - 2}
                             </span>
                           )}
-                        </span>
-                        {comment.user.id === meId && (
-                          <button
-                            type="button"
-                            onClick={() => deleteComment(comment)}
-                            className="text-xs text-text-secondary hover:text-red-400 transition-colors"
-                            title="Delete comment"
-                          >
-                            Delete
-                          </button>
-                        )}
+                        </div>
+                      )}
+
+                      <div className="mt-3 flex items-center justify-between pt-1">
+                        {/* Assignee badges */}
+                        <div className="flex -space-x-1.5">
+                          {issue.assignees.map(({ user }) => (
+                            <span
+                              key={user.id}
+                              title={user.username}
+                              className="flex h-5 w-5 items-center justify-center rounded-full bg-[#7b39fc] text-[9px] font-semibold text-white ring-2 ring-[#1e1e1e]"
+                            >
+                              {user.username.slice(0, 1).toUpperCase()}
+                            </span>
+                          ))}
+                        </div>
+
+                        {/* Comments count */}
+                        {issue._count?.comments ? (
+                          <div className="flex items-center gap-1 text-[11px] text-white/40">
+                            <MessageSquare size={12} />
+                            <span>{issue._count.comments}</span>
+                          </div>
+                        ) : null}
                       </div>
-                      <p className="text-sm text-text-primary break-words">
-                        {comment.content}
-                      </p>
-                    </li>
+                    </div>
                   ))}
-                  {comments.length === 0 && (
-                    <p className="text-xs text-text-secondary">
-                      No comments yet
-                    </p>
-                  )}
-                </ul>
-                <form onSubmit={addComment} className="flex gap-2">
+                </div>
+
+                {/* Add Card Form */}
+                <form
+                  onSubmit={(e) => handleCreateCard(e, section.id)}
+                  className="mt-3 flex gap-2"
+                >
                   <input
                     type="text"
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    placeholder="Write a comment..."
-                    className="flex-1 px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    value={cardTitles[section.id] ?? ""}
+                    onChange={(e) =>
+                      setCardTitles((prev) => ({
+                        ...prev,
+                        [section.id]: e.target.value,
+                      }))
+                    }
+                    placeholder="Add a card..."
+                    className="flex-1 rounded-xl border-none bg-black h-9 px-3 text-xs text-white placeholder:text-white/20 outline-none focus:ring-2 focus:ring-white/20 transition-shadow"
                   />
                   <button
                     type="submit"
-                    disabled={savingComment}
-                    className="bg-white text-black px-4 py-2 rounded-md text-sm font-medium hover:bg-white/90 transition-colors disabled:opacity-50"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-black transition-all duration-200 hover:bg-white/90 active:scale-95 shrink-0"
+                    title="Add card"
                   >
-                    {savingComment ? "..." : "Add"}
+                    <Plus size={15} />
                   </button>
                 </form>
               </div>
+            ))}
+
+            {/* Add Section Column */}
+            <div className="w-72 shrink-0">
+              <form
+                onSubmit={handleCreateSection}
+                className="rounded-2xl border border-dashed border-white/10 bg-[#141414]/50 p-4 space-y-3"
+              >
+                <input
+                  type="text"
+                  value={sectionTitle}
+                  onChange={(e) => setSectionTitle(e.target.value)}
+                  placeholder="New section title..."
+                  required
+                  disabled={creating}
+                  className="w-full rounded-xl border-none bg-black h-10 px-3.5 text-sm text-white placeholder:text-white/20 outline-none focus:ring-2 focus:ring-[#7b39fc]/30 transition-shadow disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#7b39fc] py-2.5 text-xs font-semibold text-white transition-all duration-200 hover:bg-[#8d53ff] active:scale-[0.98] disabled:opacity-50"
+                >
+                  <Plus size={14} />
+                  {creating ? "Adding..." : "Add Section"}
+                </button>
+              </form>
             </div>
           </div>
-        </div>
-      )}
+        </main>
 
-      <button
-        type="button"
-        onClick={() => setChatOpen((v) => !v)}
-        className={`fixed bottom-4 right-4 z-40 px-4 py-2 rounded-full text-sm font-medium shadow-lg transition-colors ${
-          chatOpen
-            ? "bg-text-secondary text-background hover:opacity-80"
-            : "bg-white text-black hover:bg-white/90"
-        }`}
-      >
-        {chatOpen ? "Close chat" : "Board chat"}
-      </button>
-
-      {toast && (
-        <div className="fixed bottom-4 left-4 z-50 max-w-sm bg-surface border border-border rounded-lg shadow-lg px-4 py-3 text-sm text-text-primary">
-          {toast}
-        </div>
-      )}
-
-      {chatOpen && (
-        <div className="fixed bottom-16 right-4 z-40 w-80 h-96 bg-surface border border-border rounded-lg shadow-xl flex flex-col">
-          <div className="px-4 py-3 border-b border-border font-medium text-sm text-text-primary">
-            Board chat
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-3 space-y-2">
-            {messages.map((m, i) => (
-              <div
-                key={i}
-                className={
-                  m.userId === meId ? "text-right" : "text-left"
-                }
-              >
-                <span className="text-[11px] text-text-secondary">
-                  {m.userId === meId ? "You" : m.username || "Someone"}
-                  {m.timestamp &&
-                    ` · ${new Date(m.timestamp).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}`}
-                </span>
-                <p
-                  className={`inline-block mt-0.5 max-w-[85%] px-3 py-1.5 rounded-lg text-sm break-words ${
-                    m.userId === meId
-                      ? "bg-white text-black"
-                      : "bg-background border border-border text-text-primary"
-                  }`}
-                >
-                  {m.message}
-                </p>
-              </div>
-            ))}
-            {messages.length === 0 && (
-              <p className="text-xs text-text-secondary">
-                No messages yet. Say hello!
-              </p>
-            )}
-          </div>
-
-          <form onSubmit={sendChat} className="p-3 border-t border-border flex gap-2">
-            <input
-              type="text"
-              value={chatText}
-              onChange={(e) => setChatText(e.target.value)}
-              placeholder="Message the board"
-              className="flex-1 px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            />
-            <button
-              type="submit"
-              className="bg-white text-black px-3 py-2 rounded-md text-sm font-medium hover:bg-white/90 transition-colors"
+        {/* Card Details Modal */}
+        <AnimatePresence>
+          {selectedIssue && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
+              onClick={() => {
+                setSelectedIssue(null);
+                setShowMembers(false);
+                setSuggestOpen(false);
+              }}
             >
-              Send
-            </button>
-          </form>
-        </div>
-      )}
-    </div>
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex max-h-[85vh] w-full max-w-xl flex-col rounded-2xl border border-white/10 bg-[#161616] shadow-2xl overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Modal Header */}
+                <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4">
+                  <h2 className="font-[family-name:var(--font-manrope)] text-base font-semibold text-white">
+                    Card Details
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedIssue(null);
+                      setShowMembers(false);
+                      setSuggestOpen(false);
+                    }}
+                    className="rounded-lg p-1.5 text-white/40 transition-colors hover:bg-white/[0.06] hover:text-white"
+                    title="Close"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {/* Modal Content */}
+                <div className="space-y-5 overflow-y-auto p-6">
+                  {/* Title */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-white/40">
+                      Title
+                    </label>
+                    <input
+                      type="text"
+                      value={issueTitle}
+                      onChange={(e) => setIssueTitle(e.target.value)}
+                      className="w-full rounded-xl border-none bg-black h-11 px-4 text-sm font-medium text-white placeholder:text-white/20 outline-none focus:ring-2 focus:ring-white/20 transition-shadow"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-white/40">
+                      Description
+                    </label>
+                    <textarea
+                      value={issueDescription}
+                      onChange={(e) => setIssueDescription(e.target.value)}
+                      rows={3}
+                      placeholder="Add a detailed description..."
+                      className="w-full resize-none rounded-xl border-none bg-black p-3.5 text-sm text-white placeholder:text-white/20 outline-none focus:ring-2 focus:ring-white/20 transition-shadow"
+                    />
+                  </div>
+
+                  {/* Save button */}
+                  <div>
+                    <button
+                      type="button"
+                      onClick={saveCard}
+                      disabled={savingIssue}
+                      className="rounded-xl bg-white px-5 py-2.5 text-xs font-semibold text-black transition-all duration-200 hover:bg-white/90 active:scale-95 disabled:opacity-50"
+                    >
+                      {savingIssue ? "Saving..." : "Save changes"}
+                    </button>
+                  </div>
+
+                  {/* Assignees */}
+                  <div className="space-y-2 border-t border-white/[0.06] pt-4">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-white/40">
+                      Assignees
+                    </label>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {selectedIssue.assignees.map(({ user }) => (
+                        <span
+                          key={user.id}
+                          onClick={() => toggleAssignee({ user } as Member)}
+                          className="group flex cursor-pointer items-center gap-1.5 rounded-full bg-[#7b39fc]/15 px-3 py-1 text-xs font-medium text-[#a87aff] transition-colors hover:bg-red-400/10 hover:text-red-400"
+                          title={`Click to remove ${user.username}`}
+                        >
+                          {user.username}
+                          <X size={12} className="opacity-60 group-hover:opacity-100" />
+                        </span>
+                      ))}
+                      {selectedIssue.assignees.length === 0 && (
+                        <span className="text-xs text-white/30">
+                          No assignees yet
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setShowMembers((v) => !v)}
+                        className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-white/70 transition-colors hover:border-white/20 hover:text-white"
+                      >
+                        <Users size={12} />
+                        {showMembers ? "Close" : "+ Assign"}
+                      </button>
+                    </div>
+
+                    {/* Member selection dropdown */}
+                    {showMembers && (
+                      <div className="mt-2 divide-y divide-white/[0.06] rounded-xl border border-white/10 bg-black/60 overflow-hidden">
+                        {members.map((member) => (
+                          <button
+                            key={member.user.id}
+                            type="button"
+                            onClick={() => toggleAssignee(member)}
+                            className="flex w-full items-center justify-between px-3.5 py-2.5 text-left text-xs transition-colors hover:bg-white/[0.04]"
+                          >
+                            <span className="font-medium text-white">
+                              {member.user.username}
+                              {member.user.id === meId && (
+                                <span className="ml-1.5 text-white/40">
+                                  (you)
+                                </span>
+                              )}
+                            </span>
+                            <span
+                              className={`flex items-center gap-1 text-[11px] font-semibold ${
+                                isAssigned(member.user.id)
+                                  ? "text-[#7b39fc]"
+                                  : "text-white/40"
+                              }`}
+                            >
+                              {isAssigned(member.user.id) ? (
+                                <>
+                                  <Check size={12} /> Assigned
+                                </>
+                              ) : (
+                                "Assign"
+                              )}
+                            </span>
+                          </button>
+                        ))}
+                        {members.length === 0 && (
+                          <p className="px-3.5 py-2.5 text-xs text-white/30">
+                            No organization members found
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Required Skills & Auto-assignment */}
+                  <div className="space-y-2 border-t border-white/[0.06] pt-4">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-white/40">
+                      Required skills
+                    </label>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {(selectedIssue.requiredSkills ?? []).map((skill) => (
+                        <span
+                          key={skill}
+                          className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-black px-2.5 py-1 text-xs text-white/90"
+                        >
+                          {skill}
+                          <button
+                            type="button"
+                            onClick={() => removeRequiredSkill(skill)}
+                            className="text-white/30 transition-colors hover:text-red-400"
+                            title="Remove skill"
+                          >
+                            <X size={12} />
+                          </button>
+                        </span>
+                      ))}
+                      {(selectedIssue.requiredSkills ?? []).length === 0 && (
+                        <span className="text-xs text-white/30">
+                          Auto-extracted from title & description
+                        </span>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={suggestAssignees}
+                      disabled={suggesting}
+                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7b39fc] to-[#9d6aff] py-2.5 text-xs font-semibold text-white shadow-[0_4px_16px_rgba(123,57,252,0.3)] transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+                    >
+                      <Zap size={14} />
+                      {suggesting ? "Scoring members..." : "Suggest Assignee (AI Match)"}
+                    </button>
+
+                    {/* Suggestions output */}
+                    {suggestOpen && suggestions.length > 0 && (
+                      <div className="mt-3 divide-y divide-white/[0.06] rounded-xl border border-white/10 bg-black/60">
+                        {suggestions.map((c, i) => (
+                          <div
+                            key={c.userId}
+                            className="flex items-center gap-3 p-3 text-xs"
+                          >
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-[10px] font-semibold text-white/60">
+                              {i + 1}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-semibold text-white truncate">
+                                  {c.username}
+                                </span>
+                                <span className="text-[11px] text-white/40">
+                                  score: <strong className="text-white">{c.score}</strong> · precision:{" "}
+                                  {Math.round(c.precision * 100)}%
+                                </span>
+                              </div>
+                              <div className="mt-1.5 flex flex-wrap gap-1">
+                                {c.matchedSkills.map((m) => (
+                                  <span
+                                    key={m.skill}
+                                    className="rounded bg-emerald-400/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400"
+                                  >
+                                    {m.skill} {Math.round(m.strength * 100)}%
+                                  </span>
+                                ))}
+                                {c.missingSkills.map((m) => (
+                                  <span
+                                    key={m}
+                                    className="rounded bg-red-400/10 px-1.5 py-0.5 text-[10px] font-medium text-red-400"
+                                  >
+                                    missing: {m}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            {isAssigned(c.userId) ? (
+                              <span className="shrink-0 font-medium text-[#7b39fc]">
+                                ✓ Assigned
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  toggleAssignee({
+                                    user: {
+                                      id: c.userId,
+                                      username: c.username,
+                                      email: "",
+                                    },
+                                  });
+                                  emitAssignment(c);
+                                }}
+                                className="shrink-0 rounded-lg bg-white px-3 py-1 text-xs font-semibold text-black transition-colors hover:bg-white/90"
+                              >
+                                Assign
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {suggestOpen && suggestions.length === 0 && (
+                      <p className="mt-2 text-center text-xs text-white/30">
+                        No member matched the required skills yet.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Comments Section */}
+                  <div className="space-y-3 border-t border-white/[0.06] pt-4">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-white/40">
+                      Comments ({comments.length})
+                    </label>
+                    <ul className="space-y-2.5">
+                      {comments.map((comment) => (
+                        <li
+                          key={comment.id}
+                          className="rounded-xl border border-white/[0.06] bg-black/40 p-3"
+                        >
+                          <div className="mb-1 flex items-center justify-between">
+                            <span className="text-xs font-semibold text-white/80">
+                              {comment.user.username}
+                              {comment.user.id === meId && (
+                                <span className="ml-1.5 font-normal text-white/30">
+                                  (you)
+                                </span>
+                              )}
+                            </span>
+                            {comment.user.id === meId && (
+                              <button
+                                type="button"
+                                onClick={() => deleteComment(comment)}
+                                className="text-xs text-white/30 transition-colors hover:text-red-400"
+                                title="Delete comment"
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </div>
+                          <p className="break-words text-xs text-white/70">
+                            {comment.content}
+                          </p>
+                        </li>
+                      ))}
+                      {comments.length === 0 && (
+                        <p className="text-xs text-white/30">No comments yet</p>
+                      )}
+                    </ul>
+
+                    <form onSubmit={addComment} className="flex gap-2 pt-1">
+                      <input
+                        type="text"
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        placeholder="Write a comment..."
+                        className="flex-1 rounded-xl border-none bg-black h-10 px-3.5 text-xs text-white placeholder:text-white/20 outline-none focus:ring-2 focus:ring-white/20 transition-shadow"
+                      />
+                      <button
+                        type="submit"
+                        disabled={savingComment}
+                        className="rounded-xl bg-white px-4 text-xs font-semibold text-black transition-colors hover:bg-white/90 disabled:opacity-50"
+                      >
+                        {savingComment ? "..." : "Send"}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Live Board Chat Floating Button */}
+        <button
+          type="button"
+          onClick={() => setChatOpen((v) => !v)}
+          className={`fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold shadow-2xl transition-all duration-300 ${
+            chatOpen
+              ? "bg-[#2a2a2a] text-white hover:bg-[#333]"
+              : "bg-[#7b39fc] text-white shadow-[0_6px_24px_rgba(123,57,252,0.4)] hover:bg-[#8d53ff] hover:scale-105"
+          }`}
+        >
+          <MessageSquare size={16} />
+          {chatOpen ? "Close Chat" : "Live Chat"}
+        </button>
+
+        {/* Toast notifications */}
+        <AnimatePresence>
+          {toast && (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 16 }}
+              className="fixed bottom-6 left-6 z-50 flex items-center gap-2.5 rounded-2xl border border-white/10 bg-[#1e1e1e] px-4 py-3 text-xs font-medium text-white shadow-2xl"
+            >
+              <Sparkles size={14} className="text-[#7b39fc] shrink-0" />
+              <span>{toast}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Live Board Chat Popup Panel */}
+        <AnimatePresence>
+          {chatOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="glass-strong fixed bottom-20 right-6 z-40 flex h-[420px] w-80 flex-col rounded-2xl border border-white/10 bg-[#161616] shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <MessageSquare size={15} className="text-[#7b39fc]" />
+                  <span className="font-[family-name:var(--font-manrope)] text-sm font-semibold text-white">
+                    Board Chat
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setChatOpen(false)}
+                  className="text-white/40 hover:text-white"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* Chat messages */}
+              <div className="flex-1 space-y-2.5 overflow-y-auto p-4">
+                {messages.map((m, i) => {
+                  const isMe = m.userId === meId;
+                  return (
+                    <div
+                      key={i}
+                      className={isMe ? "text-right" : "text-left"}
+                    >
+                      <span className="text-[10px] text-white/40">
+                        {isMe ? "You" : m.username || "Someone"}
+                        {m.timestamp &&
+                          ` · ${new Date(m.timestamp).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}`}
+                      </span>
+                      <div>
+                        <p
+                          className={`inline-block mt-1 max-w-[85%] rounded-2xl px-3.5 py-2 text-xs break-words ${
+                            isMe
+                              ? "bg-[#7b39fc] text-white"
+                              : "border border-white/[0.06] bg-[#222] text-white/90"
+                          }`}
+                        >
+                          {m.message}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+                {messages.length === 0 && (
+                  <div className="flex flex-col items-center justify-center h-full py-8 text-center text-white/30 text-xs">
+                    <MessageSquare size={24} className="mb-2 text-white/10" />
+                    No messages yet. Say hello to your team!
+                  </div>
+                )}
+              </div>
+
+              {/* Send message form */}
+              <form
+                onSubmit={sendChat}
+                className="flex items-center gap-2 border-t border-white/[0.06] p-3"
+              >
+                <input
+                  type="text"
+                  value={chatText}
+                  onChange={(e) => setChatText(e.target.value)}
+                  placeholder="Message team..."
+                  className="flex-1 rounded-xl border-none bg-black h-9 px-3 text-xs text-white placeholder:text-white/20 outline-none focus:ring-2 focus:ring-[#7b39fc]/30"
+                />
+                <button
+                  type="submit"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#7b39fc] text-white transition-colors hover:bg-[#8d53ff] shrink-0"
+                  title="Send"
+                >
+                  <Send size={13} />
+                </button>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </RequireAuth>
   );
 }
