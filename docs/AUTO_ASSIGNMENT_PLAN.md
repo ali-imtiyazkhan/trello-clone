@@ -32,7 +32,7 @@ The answer: **Skill-based auto-assignment.** The app learns every member's real 
 - **Boards:** create, rename, delete, per-org tabs + grid on `/boards`
 - **Sections:** create, rename, delete (`⋯` menu)
 - **Cards (issues):** create, delete, drag & drop between sections, full detail modal (title, description, assignees, comments)
-- **Realtime:** live presence ("N online"), instant board updates across clients, board chat
+- **Realtime:** live presence ("N online"), instant board updates across clients, board chat, assignment/profile notifications (`CARD_ASSIGNED`, `PROFILE_UPDATED`)
 - **Quality:** `check-types` + `lint` (zero warnings) pass; README documented; pushed to GitHub
 
 ---
@@ -75,7 +75,7 @@ The Trello clone itself: auth, orgs, boards, sections, cards, assignees, comment
 
 ---
 
-### Phase 1 — Data model & skill dictionary
+### Phase 1 — Data model & skill dictionary (COMPLETED)
 
 **Goal:** schema and shared vocabulary everything else builds on.
 
@@ -97,7 +97,7 @@ The Trello clone itself: auth, orgs, boards, sections, cards, assignees, comment
 
 ---
 
-### Phase 2 — Skill extraction (backend)
+### Phase 2 — Skill extraction (backend) (COMPLETED)
 
 **Goal:** every user can build a profile from three sources, merged into `UserSkill`.
 
@@ -124,7 +124,7 @@ The Trello clone itself: auth, orgs, boards, sections, cards, assignees, comment
 
 ---
 
-### Phase 3 — Matching engine (backend, the core)
+### Phase 3 — Matching engine (backend, the core) (COMPLETED)
 
 **Goal:** a transparent, deterministic — and later upgradable — scorer. This is the heart of the feature.
 
@@ -149,7 +149,9 @@ The Trello clone itself: auth, orgs, boards, sections, cards, assignees, comment
 
 ---
 
-### Phase 4 — UI (frontend)
+### Phase 4 — UI (frontend) (COMPLETED)
+
+Realtime notifications (`CARD_ASSIGNED` / `PROFILE_UPDATED` toasts) and the org member dominant-skill badges shipped with this phase.
 
 **Goal:** make the feature visible and delightful.
 
