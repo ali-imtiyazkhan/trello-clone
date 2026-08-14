@@ -7,7 +7,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "dev": "bun src/index.js"
+    "dev": "bun --watch src/index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",
