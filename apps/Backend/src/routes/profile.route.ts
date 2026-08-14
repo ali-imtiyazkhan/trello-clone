@@ -2,7 +2,9 @@ import { Router } from "express";
 import multer from "multer";
 import { PDFParse } from "pdf-parse";
 import { prisma } from "prisma";
+import { matchText } from "@repo/shared";
 import { authMiddleware } from "../middleware/auth";
+import { PublicGithubFetcher, fetchGithubWithCache, languageStatsToSkills } from "../services/github.service";
 
 const router = Router();
 
@@ -10,36 +12,6 @@ const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 },
 });
-
-const DICTIONARY: Record<string, string[]> = {
-    react: ["react", "reactjs", "react.js", "react native"],
-    node: ["node", "nodejs", "express", "nest"],
-    typescript: ["typescript", "ts"],
-    javascript: ["javascript", "js", "es6"],
-    sql: ["sql", "postgres", "postgresql", "mysql", "database"],
-    docker: ["docker", "kubernetes", "k8s", "container"],
-    python: ["python", "django", "flask"],
-    golang: ["go", "golang"],
-    rust: ["rust"],
-    java: ["java", "spring"],
-    aws: ["aws", "s3", "lambda", "ec2", "cloud"],
-    git: ["git", "github", "github actions"],
-};
-
-function matchSkills(text: string) {
-    const lower = text.toLowerCase();
-
-    const hits: { name: string; count: number }[] = [];
-
-    for (const [skill, aliases] of Object.entries(DICTIONARY)) {
-        let count = 0;
-        for (const alias of aliases) {
-            count += lower.split(alias).length - 1;
-        }
-        if (count > 0) hits.push({ name: skill, count });
-    }
-    return hits;
-}
 
 async function upsertSkill(userId: string, name: string, strength: number, count: number, source: "RESUME" | "GITHUB") {
     const existing = await prisma.userSkill.findUnique({
@@ -101,7 +73,7 @@ router.post("/resume", authMiddleware, upload.single("file"), async (req, res) =
             });
         }
 
-        const hits = matchSkills(text);
+        const hits = matchText(text);
         for (const hit of hits) {
             await upsertSkill(req.user.id, hit.name, Math.min(1, hit.count / 5), hit.count, "RESUME");
         }
@@ -158,6 +130,69 @@ router.post("/skills", authMiddleware, async (req, res) => {
         return res.status(500).json({
             message: "Internal server error",
         });
+    }
+});
+
+router.get("/", authMiddleware, async (req, res) => {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: req.user.id },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                githubUsername: true,
+                githubSyncedAt: true,
+                skills: { orderBy: { strength: "desc" } },
+            },
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        return res.json({ user });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+router.post("/github", authMiddleware, async (req, res) => {
+    const { username } = req.body as { username?: string };
+    const normalized = username?.trim().replace(/^@/, "");
+
+    if (!normalized) {
+        return res.status(400).json({ message: "username is required" });
+    }
+
+    try {
+        const data = await fetchGithubWithCache(normalized, new PublicGithubFetcher());
+
+        const languageSkills = languageStatsToSkills(data.languages);
+        for (const skill of languageSkills) {
+            await upsertSkill(req.user.id, skill.name, skill.strength, skill.count, "GITHUB");
+        }
+
+        const topicHits = matchText(data.topics.join(" "));
+        for (const hit of topicHits) {
+            await upsertSkill(req.user.id, hit.name, Math.min(0.6, hit.count * 0.2), hit.count, "GITHUB");
+        }
+
+        await prisma.user.update({
+            where: { id: req.user.id },
+            data: { githubUsername: normalized, githubSyncedAt: new Date() },
+        });
+
+        const saved = await prisma.userSkill.findMany({ where: { userId: req.user.id } });
+
+        return res.json({ message: "GitHub profile synced", skills: saved });
+    } catch (error) {
+        if (error instanceof Error && error.message === "GitHub user not found") {
+            return res.status(404).json({ message: error.message });
+        }
+        console.error(error);
+        return res.status(500).json({ message: "Internal server error" });
     }
 });
 

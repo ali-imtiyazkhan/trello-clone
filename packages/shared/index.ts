@@ -1,3 +1,5 @@
+export * from "./skills";
+
 export interface RoomJoinedMessage {
   type: 'ROOM_JOINED';
   data: {
