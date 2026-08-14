@@ -70,7 +70,7 @@ export default function SignUpPage() {
 
   return (
     <AuthShell
-      title="Join Trello Clone"
+      title="Join Flowsilk"
       subtitle="Follow these 3 quick steps to activate your space."
       steps={[
         { number: 1, text: "Register your identity", active: true },

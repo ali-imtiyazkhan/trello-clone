@@ -25,7 +25,7 @@ export default function BoardPreview() {
               <span className="h-3 w-3 rounded-full bg-[#27c93f]/80" />
             </div>
             <span className="ml-3 hidden font-[family-name:var(--font-manrope)] text-xs font-medium text-white/40 sm:inline-block">
-              app.trelloclone.com/boards/engineering-sprint
+              app.flowsilk.com/boards/engineering-sprint
             </span>
           </div>
 

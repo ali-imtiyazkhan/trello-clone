@@ -48,7 +48,7 @@ export default function RequireAuth({ children }: { children: React.ReactNode })
             />
           </svg>
           <span className="font-[family-name:var(--font-manrope)] text-sm font-semibold tracking-tight text-white/40">
-            Trello Clone
+            Flowsilk
           </span>
         </div>
       </div>

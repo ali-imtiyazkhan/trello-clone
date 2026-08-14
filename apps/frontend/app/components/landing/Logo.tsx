@@ -5,7 +5,7 @@ export default function Logo() {
     <Link
       href="/"
       className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
-      aria-label="Trello Clone home"
+      aria-label="Flowsilk home"
     >
       <svg
         width="28"
@@ -29,7 +29,7 @@ export default function Logo() {
         />
       </svg>
       <span className="font-[family-name:var(--font-manrope)] text-[17px] font-bold tracking-tight text-white">
-        Trello Clone
+        Flowsilk
       </span>
     </Link>
   );

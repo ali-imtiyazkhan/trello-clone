@@ -35,7 +35,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Trello Clone",
+  title: "Flowsilk",
   description: "Organize boards, sections, and issues with your team",
 };
 

@@ -93,7 +93,7 @@ export default function AuthShell({
               aria-hidden="true"
             />
             <span className="text-xl font-semibold tracking-tight">
-              Trello Clone
+              Flowsilk
             </span>
           </motion.div>
 

@@ -94,7 +94,7 @@ export default function Footer() {
         {/* Bottom copyright line */}
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/[0.08] pt-6 sm:flex-row">
           <p className="font-[family-name:var(--font-inter)] text-xs text-white/40">
-            © {new Date().getFullYear()} Trello Clone. All rights reserved.
+            © {new Date().getFullYear()} Flowsilk. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             <span className="font-[family-name:var(--font-inter)] text-xs text-white/40">

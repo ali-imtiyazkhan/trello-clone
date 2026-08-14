@@ -65,7 +65,7 @@ export default function Header({
         <Link
           href="/"
           className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
-          aria-label="Trello Clone home"
+          aria-label="Flowsilk home"
         >
           <svg
             width="24"
@@ -89,7 +89,7 @@ export default function Header({
             />
           </svg>
           <span className="font-[family-name:var(--font-manrope)] text-[15px] font-bold tracking-tight text-white hidden sm:block">
-            Trello Clone
+            Flowsilk
           </span>
         </Link>
 
@@ -196,7 +196,7 @@ export default function Header({
                 />
               </svg>
               <span className="font-[family-name:var(--font-manrope)] text-[15px] font-bold tracking-tight text-white">
-                Trello Clone
+                Flowsilk
               </span>
             </Link>
             <button
