@@ -145,7 +145,7 @@ export default function BoardPage() {
 
         <main className="max-w-6xl mx-auto px-4 py-8">
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+          <div className="mb-4 p-3 bg-red-400/10 border border-red-400/20 text-red-400 rounded-md text-sm">
             {error}
           </div>
         )}
@@ -156,7 +156,7 @@ export default function BoardPage() {
             <p className="mt-1 text-sm">Create an organization to get started</p>
             <Link
               href="/organization"
-              className="inline-block mt-6 bg-primary text-white px-4 py-2 rounded-md font-medium hover:bg-primary-hover transition-colors"
+              className="inline-block mt-6 bg-white text-black px-4 py-2 rounded-md font-medium hover:bg-white/90 transition-colors"
             >
               Create organization
             </Link>
@@ -171,7 +171,7 @@ export default function BoardPage() {
                   onClick={() => setActiveOrgId(org.id)}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                     activeOrgId === org.id
-                      ? "bg-primary text-white border-primary"
+                      ? "bg-white text-black border-primary"
                       : "bg-surface text-text-secondary border-border hover:text-text-primary hover:border-primary/50"
                   }`}
                 >
@@ -197,7 +197,7 @@ export default function BoardPage() {
                 <button
                   type="submit"
                   disabled={creating}
-                  className="bg-primary text-white px-4 py-2 rounded-md font-medium hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="bg-white text-black px-4 py-2 rounded-md font-medium hover:bg-white/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {creating ? "Creating..." : "Create board"}
                 </button>

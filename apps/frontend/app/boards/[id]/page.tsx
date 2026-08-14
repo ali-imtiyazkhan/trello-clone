@@ -957,7 +957,7 @@ export default function BoardDetailPage() {
                 <button
                   type="button"
                   onClick={saveBoardTitle}
-                  className="text-sm bg-primary text-white px-3 py-1 rounded-md font-medium hover:bg-primary-hover transition-colors"
+                  className="text-sm bg-white text-black px-3 py-1 rounded-md font-medium hover:bg-white/90 transition-colors"
                 >
                   Save
                 </button>
@@ -978,7 +978,7 @@ export default function BoardDetailPage() {
                 <button
                   type="button"
                   onClick={handleDeleteBoard}
-                  className="text-xs text-text-secondary hover:text-red-600 transition-colors"
+                  className="text-xs text-text-secondary hover:text-red-400 transition-colors"
                   title="Delete board"
                 >
                   Delete
@@ -1006,7 +1006,7 @@ export default function BoardDetailPage() {
 
         <main className="max-w-6xl mx-auto px-4 py-8">
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+          <div className="mb-4 p-3 bg-red-400/10 border border-red-400/20 text-red-400 rounded-md text-sm">
             {error}
           </div>
         )}
@@ -1042,7 +1042,7 @@ export default function BoardDetailPage() {
                     <button
                       type="button"
                       onClick={() => saveRenameSection(section)}
-                      className="text-xs bg-primary text-white px-2 py-1 rounded font-medium hover:bg-primary-hover transition-colors"
+                      className="text-xs bg-white text-black px-2 py-1 rounded font-medium hover:bg-white/90 transition-colors"
                     >
                       OK
                     </button>
@@ -1076,7 +1076,7 @@ export default function BoardDetailPage() {
                             <button
                               type="button"
                               onClick={() => handleDeleteSection(section)}
-                              className="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-background transition-colors"
+                              className="block w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-background transition-colors"
                             >
                               Delete
                             </button>
@@ -1117,7 +1117,7 @@ export default function BoardDetailPage() {
                           e.stopPropagation();
                           handleDeleteCard(section.id, issue);
                         }}
-                        className="hidden group-hover:block text-text-secondary hover:text-red-600 text-xs shrink-0"
+                        className="hidden group-hover:block text-text-secondary hover:text-red-400 text-xs shrink-0"
                         title="Delete card"
                       >
                         &times;
@@ -1136,7 +1136,7 @@ export default function BoardDetailPage() {
                           <span
                             key={user.id}
                             title={user.username}
-                            className="w-6 h-6 rounded-full bg-primary text-white text-[10px] font-medium flex items-center justify-center border-2 border-background"
+                            className="w-6 h-6 rounded-full bg-white text-black text-[10px] font-medium flex items-center justify-center border-2 border-background"
                           >
                             {user.username.slice(0, 1).toUpperCase()}
                           </span>
@@ -1171,7 +1171,7 @@ export default function BoardDetailPage() {
                 />
                 <button
                   type="submit"
-                  className="bg-primary text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors"
+                  className="bg-white text-black px-3 py-1.5 rounded-md text-sm font-medium hover:bg-white/90 transition-colors"
                 >
                   Add
                 </button>
@@ -1193,7 +1193,7 @@ export default function BoardDetailPage() {
           <button
             type="submit"
             disabled={creating}
-            className="bg-primary text-white px-4 py-2 rounded-md font-medium hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="bg-white text-black px-4 py-2 rounded-md font-medium hover:bg-white/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {creating ? "Creating..." : "Add section"}
           </button>
@@ -1262,7 +1262,7 @@ export default function BoardDetailPage() {
                   type="button"
                   onClick={saveCard}
                   disabled={savingIssue}
-                  className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors disabled:opacity-50"
+                  className="bg-white text-black px-4 py-2 rounded-md text-sm font-medium hover:bg-white/90 transition-colors disabled:opacity-50"
                 >
                   {savingIssue ? "Saving..." : "Save"}
                 </button>
@@ -1279,7 +1279,7 @@ export default function BoardDetailPage() {
                       onClick={() =>
                         toggleAssignee({ user } as Member)
                       }
-                      className="cursor-pointer bg-primary/10 text-text-primary text-xs font-medium rounded-full px-2.5 py-1 hover:bg-red-50 hover:text-red-600 transition-colors"
+                      className="cursor-pointer bg-primary/10 text-text-primary text-xs font-medium rounded-full px-2.5 py-1 hover:bg-red-400/10 hover:text-red-400 transition-colors"
                       title={`Remove ${user.username}`}
                     >
                       {user.username}
@@ -1350,7 +1350,7 @@ export default function BoardDetailPage() {
                       <button
                         type="button"
                         onClick={() => removeRequiredSkill(skill)}
-                        className="text-text-secondary hover:text-red-600"
+                        className="text-text-secondary hover:text-red-400"
                         title="Remove skill"
                       >
                         &times;
@@ -1368,7 +1368,7 @@ export default function BoardDetailPage() {
                   type="button"
                   onClick={suggestAssignees}
                   disabled={suggesting}
-                  className="mt-3 w-full bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors disabled:opacity-50"
+                  className="mt-3 w-full bg-white text-black px-4 py-2 rounded-md text-sm font-medium hover:bg-white/90 transition-colors disabled:opacity-50"
                 >
                   {suggesting ? "Scoring members..." : "Suggest assignee"}
                 </button>
@@ -1394,7 +1394,7 @@ export default function BoardDetailPage() {
                             {c.matchedSkills.map((m) => (
                               <span
                                 key={m.skill}
-                                className="text-[11px] bg-green-50 text-green-700 rounded-full px-2 py-0.5"
+                                className="text-[11px] bg-green-400/10 text-green-400 rounded-full px-2 py-0.5"
                               >
                                 {m.skill} {Math.round(m.strength * 100)}%
                               </span>
@@ -1402,7 +1402,7 @@ export default function BoardDetailPage() {
                             {c.missingSkills.map((m) => (
                               <span
                                 key={m}
-                                className="text-[11px] bg-red-50 text-red-600 rounded-full px-2 py-0.5"
+                                className="text-[11px] bg-red-400/10 text-red-400 rounded-full px-2 py-0.5"
                               >
                                 missing: {m}
                               </span>
@@ -1426,7 +1426,7 @@ export default function BoardDetailPage() {
                               });
                               emitAssignment(c);
                             }}
-                            className="text-xs bg-primary text-white px-3 py-1 rounded-md font-medium hover:bg-primary-hover transition-colors shrink-0"
+                            className="text-xs bg-white text-black px-3 py-1 rounded-md font-medium hover:bg-white/90 transition-colors shrink-0"
                           >
                             Assign
                           </button>
@@ -1465,7 +1465,7 @@ export default function BoardDetailPage() {
                           <button
                             type="button"
                             onClick={() => deleteComment(comment)}
-                            className="text-xs text-text-secondary hover:text-red-600 transition-colors"
+                            className="text-xs text-text-secondary hover:text-red-400 transition-colors"
                             title="Delete comment"
                           >
                             Delete
@@ -1494,7 +1494,7 @@ export default function BoardDetailPage() {
                   <button
                     type="submit"
                     disabled={savingComment}
-                    className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors disabled:opacity-50"
+                    className="bg-white text-black px-4 py-2 rounded-md text-sm font-medium hover:bg-white/90 transition-colors disabled:opacity-50"
                   >
                     {savingComment ? "..." : "Add"}
                   </button>
@@ -1511,7 +1511,7 @@ export default function BoardDetailPage() {
         className={`fixed bottom-4 right-4 z-40 px-4 py-2 rounded-full text-sm font-medium shadow-lg transition-colors ${
           chatOpen
             ? "bg-text-secondary text-background hover:opacity-80"
-            : "bg-primary text-white hover:bg-primary-hover"
+            : "bg-white text-black hover:bg-white/90"
         }`}
       >
         {chatOpen ? "Close chat" : "Board chat"}
@@ -1548,7 +1548,7 @@ export default function BoardDetailPage() {
                 <p
                   className={`inline-block mt-0.5 max-w-[85%] px-3 py-1.5 rounded-lg text-sm break-words ${
                     m.userId === meId
-                      ? "bg-primary text-white"
+                      ? "bg-white text-black"
                       : "bg-background border border-border text-text-primary"
                   }`}
                 >
@@ -1573,7 +1573,7 @@ export default function BoardDetailPage() {
             />
             <button
               type="submit"
-              className="bg-primary text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors"
+              className="bg-white text-black px-3 py-2 rounded-md text-sm font-medium hover:bg-white/90 transition-colors"
             >
               Send
             </button>

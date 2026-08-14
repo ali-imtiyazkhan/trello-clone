@@ -251,7 +251,7 @@ export default function OrganizationPage() {
 
         <main className="max-w-6xl mx-auto px-4 py-8">
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+          <div className="mb-4 p-3 bg-red-400/10 border border-red-400/20 text-red-400 rounded-md text-sm">
             {error}
           </div>
         )}
@@ -265,7 +265,7 @@ export default function OrganizationPage() {
             <button
               type="button"
               onClick={() => setShowForm(true)}
-              className="mt-6 bg-primary text-white px-4 py-2 rounded-md font-medium hover:bg-primary-hover transition-colors"
+              className="mt-6 bg-white text-black px-4 py-2 rounded-md font-medium hover:bg-white/90 transition-colors"
             >
               Create organization
             </button>
@@ -306,7 +306,7 @@ export default function OrganizationPage() {
                   <button
                     type="submit"
                     disabled={creating}
-                    className="w-full bg-primary text-white py-2 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors disabled:opacity-50"
+                    className="w-full bg-white text-black py-2 rounded-md text-sm font-medium hover:bg-white/90 transition-colors disabled:opacity-50"
                   >
                     {creating ? "Creating..." : "Create"}
                   </button>
@@ -372,7 +372,7 @@ export default function OrganizationPage() {
                             },
                           })
                         }
-                        className="text-sm text-red-600 hover:underline"
+                        className="text-sm text-red-400 hover:underline"
                       >
                         Delete org
                       </button>
@@ -476,7 +476,7 @@ export default function OrganizationPage() {
                               <button
                                 type="button"
                                 onClick={() => handleRemoveMember(member)}
-                                className="text-xs text-text-secondary hover:text-red-600 transition-colors"
+                                className="text-xs text-text-secondary hover:text-red-400 transition-colors"
                                 title="Remove member"
                               >
                                 Remove

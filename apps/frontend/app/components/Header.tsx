@@ -59,7 +59,7 @@ export default function Header({
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <span className="w-7 h-7 bg-primary rounded-md flex items-center justify-center text-white text-sm font-bold">
+            <span className="w-7 h-7 bg-white text-black rounded-md flex items-center justify-center text-sm font-bold">
               T
             </span>
             <span className="text-lg font-semibold tracking-tight text-text-primary hidden sm:block">
@@ -90,7 +90,7 @@ export default function Header({
           <button
             type="button"
             onClick={handleLogout}
-            className="text-sm text-text-secondary hover:text-red-600 transition-colors"
+            className="text-sm text-text-secondary hover:text-red-400 transition-colors"
           >
             Logout
           </button>
