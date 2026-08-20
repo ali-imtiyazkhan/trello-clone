@@ -7,7 +7,7 @@ import Logo from "./Logo";
 
 const NAV_ITEMS = [
   { label: "Home", href: "/" },
-  { label: "Boards", href: "/boards" },
+  // { label: "Boards", href: "/boards" },
   { label: "Organization", href: "/organization" },
   { label: "Profile", href: "/profile" },
 ];
