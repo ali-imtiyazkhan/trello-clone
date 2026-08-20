@@ -1,5 +1,6 @@
 export * from "./skills";
-export * from "./scorer"
+export * from "./scorer";
+export type { ProblemAnalysisResult, WorkDistributionResult } from "./problem";
 
 export interface RoomJoinedMessage {
   type: 'ROOM_JOINED';

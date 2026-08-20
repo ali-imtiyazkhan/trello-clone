@@ -1,6 +1,5 @@
 import Navbar from "./components/landing/Navbar";
 import Hero from "./components/landing/Hero";
-import BoardPreview from "./components/landing/BoardPreview";
 import Stats from "./components/landing/Stats";
 import Features from "./components/landing/Features";
 import HowItWorks from "./components/landing/HowItWorks";
@@ -29,9 +28,6 @@ export default function Home() {
         <Navbar />
         <Hero />
       </div>
-
-      {/* Product Interactive Board Preview */}
-      <BoardPreview />
 
       {/* Live Engine Metrics */}
       <Stats />

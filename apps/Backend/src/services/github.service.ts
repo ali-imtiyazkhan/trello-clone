@@ -18,6 +18,7 @@ export interface GithubFetcher {
 
 const GITHUB_API = "https://api.github.com";
 const CACHE_TTL_MS = 60 * 60 * 1000;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
 export class PublicGithubFetcher implements GithubFetcher {
     async fetchProfile(username: string): Promise<GithubProfileData> {
@@ -25,6 +26,10 @@ export class PublicGithubFetcher implements GithubFetcher {
             Accept: "application/vnd.github+json, application/vnd.github.mercy-preview+json",
             "User-Agent": "trello-clone",
         };
+
+        if (GITHUB_TOKEN) {
+            headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
+        }
 
         const userRes = await fetch(`${GITHUB_API}/users/${username}`, { headers });
         if (userRes.status === 404) {
