@@ -1,4 +1,4 @@
-# Trello Clone
+# Trello Clone- work distributor based on the profie
 
 A real-time kanban board app with organizations, boards, sections, cards (issues), assignees, comments, and live presence over WebSocket.
 
