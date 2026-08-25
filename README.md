@@ -27,6 +27,17 @@ bun run dev
 - API: http://localhost:3001
 - WebSocket: ws://localhost:8080
 
+## Tech Stack
+
+| Category | Technology |
+|---|---|
+| Frontend | Next.js 15, React 19, Tailwind CSS 4, Axios |
+| Backend | Express, TypeScript, JWT |
+| Real-time | `ws` WebSocket library |
+| Database | PostgreSQL + Prisma ORM |
+| Monorepo | Turborepo |
+| Package Manager | Bun |
+
 ## Architecture
 
 Turborepo monorepo:
