@@ -1,6 +1,6 @@
-# Trello Clone- work distributor based on the profie
+# Trello Clone
 
-A real-time kanban board app with organizations, boards, sections, cards (issues), assignees, comments, and live presence over WebSocket.
+A full-stack, real-time Kanban board application built as a Turborepo monorepo. Features organizations, boards, sections, cards with assignees and comments, drag-and-drop functionality, and live presence via WebSocket. Includes JWT authentication, role-based access control, and a modern tech stack with Next.js 15, Express, TypeScript, Prisma, and PostgreSQL.
 
 ## Architecture
 
