@@ -2,6 +2,31 @@
 
 A full-stack, real-time Kanban board application built as a Turborepo monorepo. Features organizations, boards, sections, cards with assignees and comments, drag-and-drop functionality, and live presence via WebSocket. Includes JWT authentication, role-based access control, and a modern tech stack with Next.js 15, Express, TypeScript, Prisma, and PostgreSQL.
 
+## Quick Start
+
+```sh
+# 1. Install dependencies
+bun install
+
+# 2. Set up environment variables
+# packages/db/prisma/.env
+DATABASE_URL="postgresql://user:password@localhost:5432/trello"
+
+# apps/Backend/.env
+JWT_SECRET="your-long-random-secret"
+
+# 3. Setup database
+cd packages/db/prisma && bunx prisma migrate deploy && bunx prisma generate
+
+# 4. Run all services
+bun run dev
+```
+
+**Access points:**
+- Frontend: http://localhost:3000
+- API: http://localhost:3001
+- WebSocket: ws://localhost:8080
+
 ## Architecture
 
 Turborepo monorepo:
