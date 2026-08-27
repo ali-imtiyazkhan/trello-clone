@@ -131,6 +131,35 @@ enum SkillSource {
   MANUAL
 }
 
+// model Product {
+//   id          String   @id @default(uuid())
+//   name        String
+//   description String?
+//   price       Float
+//   stock       Int      @default(0)
+//   sku         String   @unique
+//   images      String[]
+//   category    String?
+//   isActive    Boolean  @default(true)
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+
+//   orderItems  OrderItem[]
+// }
+
+// model OrderItem {
+//   id        String  @id @default(uuid())
+//   orderId   String
+//   productId String
+//   quantity  Int
+//   price     Float
+
+//   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+//   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+//   @@unique([orderId, productId])
+// }
+
 // model User {
 //   id         String   @id @default(uuid())
 //   name       String
