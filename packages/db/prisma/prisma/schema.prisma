@@ -130,3 +130,41 @@ enum SkillSource {
   GITHUB
   MANUAL
 }
+
+// model User {
+//   id         String   @id @default(uuid())
+//   name       String
+//   email      String   @unique
+//   created_at DateTime @default(now())
+
+//   ordered Order[]
+//   address Address[]
+// }
+
+// model Address {
+//   id         String  @id @default(uuid())
+//   place_name String
+//   pincode    Int
+//   userId     String
+//   user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   order      Order[]
+// }
+
+// model Order {
+//   id           String   @id @default(uuid())
+//   userId       String
+//   address_id   String
+//   status       Status
+//   total_amount String
+//   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   address      Address  @relation(fields: [address_id], references: [id], onDelete: Cascade)
+//   created_at   DateTime @default(now())
+
+//   @@unique([userId, address_id])
+// }
+
+// enum Status {
+//   delivered
+//   ordered
+//   onTheWay
+// }
