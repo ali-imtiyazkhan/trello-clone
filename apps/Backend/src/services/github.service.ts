@@ -16,6 +16,8 @@ export interface GithubFetcher {
     fetchProfile(username: string): Promise<GithubProfileData>;
 }
 
+export { LANGUAGE_TO_SKILL };
+
 const GITHUB_API = "https://api.github.com";
 const CACHE_TTL_MS = 60 * 60 * 1000;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
