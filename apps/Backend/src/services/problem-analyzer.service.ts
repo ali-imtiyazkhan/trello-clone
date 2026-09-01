@@ -1,8 +1,13 @@
 import type { RequiredSkills } from "@repo/shared";
 
 const GROQ_API = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const MODEL = "llama-3.3-70b-versatile";
+
+function getGroqApiKey(): string {
+  const key = process.env.GROQ_API_KEY;
+  if (!key) throw new Error("GROQ_API_KEY not configured");
+  return key;
+}
 
 export interface ProblemAnalysisResult {
     requiredSkills: RequiredSkills[];
@@ -33,9 +38,7 @@ Rules:
 - estimatedHours: total team hours`;
 
 export async function analyzeProblem(description: string): Promise<ProblemAnalysisResult> {
-    if (!GROQ_API_KEY) {
-        throw new Error("GROQ_API_KEY not configured");
-    }
+    const GROQ_API_KEY = getGroqApiKey();
 
     const response = await fetch(GROQ_API, {
         method: "POST",
